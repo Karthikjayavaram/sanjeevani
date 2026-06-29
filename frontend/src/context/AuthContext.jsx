@@ -15,7 +15,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      // Clear stale tokens that were issued with the invalid 'admin-env-id' string
+      if (parsedUser._id === 'admin-env-id') {
+        console.warn('Stale admin-env-id token detected. Clearing session...');
+        localStorage.removeItem('user');
+      } else {
+        setUser(parsedUser);
+      }
     }
     setLoading(false);
 
