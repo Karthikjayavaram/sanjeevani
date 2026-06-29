@@ -60,8 +60,9 @@ exports.stockIn = async (req, res) => {
   try {
     const { quantity } = req.body;
     const rawAdminId = req.user.id;
-    // Guard against non-ObjectId env admin IDs (e.g. 'admin-env-id')
-    const adminId = mongoose.Types.ObjectId.isValid(rawAdminId) ? rawAdminId : null;
+    // isValid() incorrectly accepts 12-char strings; use strict 24-char hex check
+    const isValidObjectId = rawAdminId && /^[a-f\d]{24}$/i.test(rawAdminId);
+    const adminId = isValidObjectId ? rawAdminId : null;
     
     if (!quantity || quantity <= 0) {
       return res.status(400).json({ error: 'Valid quantity is required' });

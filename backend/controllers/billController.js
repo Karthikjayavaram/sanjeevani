@@ -7,8 +7,9 @@ exports.createBill = async (req, res) => {
   try {
     const { billNumber, millName, partyName, items } = req.body;
     const rawAdminId = req.user.id;
-    // Guard against non-ObjectId env admin IDs (e.g. 'admin-env-id')
-    const adminId = mongoose.Types.ObjectId.isValid(rawAdminId) ? rawAdminId : null;
+    // isValid() incorrectly accepts 12-char strings; use strict 24-char hex check
+    const isValidObjectId = rawAdminId && /^[a-f\d]{24}$/i.test(rawAdminId);
+    const adminId = isValidObjectId ? rawAdminId : null;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });
@@ -137,7 +138,8 @@ exports.cancelBill = async (req, res) => {
     }
 
     const rawAdminId = req.user.id;
-    const adminId = mongoose.Types.ObjectId.isValid(rawAdminId) ? rawAdminId : null;
+    const isValidObjectId = rawAdminId && /^[a-f\d]{24}$/i.test(rawAdminId);
+    const adminId = isValidObjectId ? rawAdminId : null;
     const stockTransactions = [];
 
     // Restore stock
@@ -174,7 +176,8 @@ exports.updateBill = async (req, res) => {
   try {
     const { millName, partyName, items } = req.body;
     const rawAdminId = req.user.id;
-    const adminId = mongoose.Types.ObjectId.isValid(rawAdminId) ? rawAdminId : null;
+    const isValidObjectId = rawAdminId && /^[a-f\d]{24}$/i.test(rawAdminId);
+    const adminId = isValidObjectId ? rawAdminId : null;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });
