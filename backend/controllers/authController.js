@@ -12,23 +12,7 @@ exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const emailInput = email.toLowerCase().trim();
-    
-    console.log('Login attempt:', emailInput, password);
-    console.log('Env variables:', process.env.ADMIN_EMAIL, process.env.ADMIN_PASSWORD);
 
-    // First check hardcoded credentials from .env
-    const adminEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.toLowerCase().trim() : '';
-    if (adminEmail && emailInput === adminEmail && password === process.env.ADMIN_PASSWORD) {
-      return res.json({
-        _id: '000000000000000000000000',
-        name: 'Administrator',
-        email: process.env.ADMIN_EMAIL,
-        role: 'admin',
-        token: generateToken('000000000000000000000000'),
-      });
-    }
-
-    // Fallback to database lookup
     const user = await User.findOne({ email: emailInput });
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
