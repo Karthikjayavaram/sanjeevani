@@ -1,9 +1,11 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Plus, Save, Trash2, CheckCircle2, Package, Search, Clock, FileText } from 'lucide-react';
+import { SocketContext } from '../context/SocketContext';
+import { Plus, Save, Trash2, CheckCircle2, Package, Search, Clock, FileText, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import PageTransition from '../components/PageTransition';
 import ConfirmDialog from '../components/ConfirmDialog';
 
@@ -25,12 +27,45 @@ const Billing = () => {
   const [bills, setBills] = useState([]);
   const [billSearchQuery, setBillSearchQuery] = useState('');
   const [loadingBills, setLoadingBills] = useState(false);
+  const [lockedBy, setLockedBy] = useState(null);
   
   const { user } = useContext(AuthContext);
+  const socket = useContext(SocketContext);
+  const hasLockRef = useRef(false);
 
   useEffect(() => {
     fetchBrands();
   }, []);
+
+  useEffect(() => {
+    if (socket && user) {
+      socket.emit('lock_billing', { adminName: user.name });
+
+      const handleBillingLocked = (data) => {
+        if (data.adminName !== user.name) {
+          setLockedBy(data.adminName);
+        } else {
+          hasLockRef.current = true;
+        }
+      };
+
+      const handleBillingUnlocked = () => {
+        setLockedBy(null);
+        socket.emit('lock_billing', { adminName: user.name });
+      };
+
+      socket.on('billing_locked', handleBillingLocked);
+      socket.on('billing_unlocked', handleBillingUnlocked);
+
+      return () => {
+        socket.off('billing_locked', handleBillingLocked);
+        socket.off('billing_unlocked', handleBillingUnlocked);
+        if (hasLockRef.current) {
+          socket.emit('unlock_billing');
+        }
+      };
+    }
+  }, [socket, user]);
 
   useEffect(() => {
     if (billSearchQuery.trim() !== '') {
@@ -93,6 +128,7 @@ const Billing = () => {
 
   const handleSubmitRequest = (e) => {
     e.preventDefault();
+    if (lockedBy) return;
     setIsConfirmDialogOpen(true);
   };
 
@@ -109,6 +145,7 @@ const Billing = () => {
 
       await axios.post(`${import.meta.env.VITE_API_URL}/bills`, payload, config);
       setSuccess(true);
+      if (socket) socket.emit('unlock_billing');
       
       setBillData({ billNumber: '', millName: '', partyName: '' });
       setItems([{ brand: '', quantity: '', id: Date.now() }]);
@@ -116,7 +153,7 @@ const Billing = () => {
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.error || 'Failed to create bill');
+      toast.error(error.response?.data?.error || 'Failed to create bill');
     }
     setLoading(false);
   };
@@ -196,6 +233,21 @@ const Billing = () => {
             <span className="font-bold">Bill created successfully!</span>
           </motion.div>
         )}
+
+        {lockedBy && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, height: 0 }} 
+            animate={{ opacity: 1, y: 0, height: 'auto' }} 
+            exit={{ opacity: 0, y: -20, height: 0 }}
+            className="mb-6 p-4 bg-warning-light border border-warning/20 text-warning rounded-[18px] flex items-center shadow-sm"
+          >
+            <Lock className="mr-3 shrink-0" size={24} />
+            <div>
+              <p className="font-bold">Billing Currently Locked</p>
+              <p className="text-sm">Another admin ({lockedBy}) is currently creating a bill. Please wait until they finish.</p>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* New Bill Form */}
@@ -212,15 +264,15 @@ const Billing = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="relative">
-              <input type="text" id="billNumber" name="billNumber" required value={billData.billNumber} onChange={handleChange} className="floating-input font-mono" placeholder=" " />
+              <input type="text" id="billNumber" name="billNumber" required value={billData.billNumber} onChange={handleChange} disabled={!!lockedBy} className="floating-input font-mono" placeholder=" " />
               <label htmlFor="billNumber" className="floating-label">Bill Number (e.g. INV-123)</label>
             </div>
             <div className="relative">
-              <input type="text" id="millName" name="millName" required value={billData.millName} onChange={handleChange} className="floating-input" placeholder=" " />
+              <input type="text" id="millName" name="millName" required value={billData.millName} onChange={handleChange} disabled={!!lockedBy} className="floating-input" placeholder=" " />
               <label htmlFor="millName" className="floating-label">Mill Name</label>
             </div>
             <div className="relative">
-              <input type="text" id="partyName" name="partyName" required value={billData.partyName} onChange={handleChange} className="floating-input" placeholder=" " />
+              <input type="text" id="partyName" name="partyName" required value={billData.partyName} onChange={handleChange} disabled={!!lockedBy} className="floating-input" placeholder=" " />
               <label htmlFor="partyName" className="floating-label">Party Name</label>
             </div>
           </div>
@@ -263,7 +315,8 @@ const Billing = () => {
                     <div className="col-span-8 md:col-span-8">
                       <select 
                         required 
-                        className="w-full bg-transparent border-0 text-text-primary text-sm md:text-base font-medium focus:ring-0 focus:outline-none cursor-pointer p-2 rounded-lg hover:bg-border/30 transition-colors"
+                        disabled={!!lockedBy}
+                        className="w-full bg-transparent border-0 text-text-primary text-sm md:text-base font-medium focus:ring-0 focus:outline-none cursor-pointer p-2 rounded-lg hover:bg-border/30 transition-colors disabled:opacity-50"
                         value={item.brand}
                         onChange={(e) => handleItemChange(index, 'brand', e.target.value)}
                       >
@@ -281,7 +334,8 @@ const Billing = () => {
                         type="number" 
                         required 
                         min="1"
-                        className="w-full bg-transparent border-b border-border/50 text-text-primary text-center text-sm md:text-base font-medium focus:ring-0 focus:outline-none focus:border-primary p-2 transition-colors placeholder:text-text-secondary/50" 
+                        disabled={!!lockedBy}
+                        className="w-full bg-transparent border-b border-border/50 text-text-primary text-center text-sm md:text-base font-medium focus:ring-0 focus:outline-none focus:border-primary p-2 transition-colors placeholder:text-text-secondary/50 disabled:opacity-50" 
                         placeholder="Qty"
                         value={item.quantity}
                         onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
@@ -318,11 +372,12 @@ const Billing = () => {
             
             <div className="p-2 border-t border-border bg-bg-secondary/30">
               <motion.button 
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={!lockedBy ? { scale: 1.01 } : {}}
+                whileTap={!lockedBy ? { scale: 0.98 } : {}}
                 type="button" 
                 onClick={addItem} 
-                className="w-full py-3 text-primary text-sm font-bold flex items-center justify-center rounded-xl hover:bg-primary/5 transition-colors"
+                disabled={!!lockedBy}
+                className={`w-full py-3 text-primary text-sm font-bold flex items-center justify-center rounded-xl transition-colors ${lockedBy ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/5'}`}
               >
                 <Plus size={18} className="mr-2" /> Add Item
               </motion.button>
@@ -331,11 +386,11 @@ const Billing = () => {
         </div>
 
         <motion.button 
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={!loading && !lockedBy ? { scale: 1.01 } : {}}
+          whileTap={!loading && !lockedBy ? { scale: 0.98 } : {}}
           type="submit" 
-          disabled={loading} 
-          className={`w-full btn-primary text-lg shadow-xl ${loading ? 'opacity-70' : ''}`}
+          disabled={loading || !!lockedBy} 
+          className={`w-full btn-primary text-lg shadow-xl ${(loading || lockedBy) ? 'opacity-70 cursor-not-allowed' : ''}`}
         >
           <Save className="mr-2" /> {loading ? 'Saving...' : 'Complete Bill'}
         </motion.button>

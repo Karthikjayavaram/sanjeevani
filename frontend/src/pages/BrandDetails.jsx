@@ -1,10 +1,12 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { SocketContext } from '../context/SocketContext';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash2, PlusCircle, History, PackageOpen, TrendingUp, TrendingDown, Save } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, PlusCircle, History, PackageOpen, TrendingUp, TrendingDown, Save, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import PageTransition from '../components/PageTransition';
 import ConfirmDialog from '../components/ConfirmDialog';
 
@@ -15,13 +17,51 @@ const BrandDetails = () => {
   const [stockInAmount, setStockInAmount] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddStockDialogOpen, setIsAddStockDialogOpen] = useState(false);
+  const [lockedBy, setLockedBy] = useState(null);
+  
   const { user } = useContext(AuthContext);
+  const socket = useContext(SocketContext);
   const navigate = useNavigate();
+  const hasLockRef = useRef(false);
 
   useEffect(() => {
     fetchBrandDetails();
     fetchTransactions();
   }, [id]);
+
+  useEffect(() => {
+    if (socket && user && id) {
+      socket.emit('lock_brand', { brandId: id, adminName: user.name });
+
+      const handleBrandLocked = (data) => {
+        if (data.brandId === id) {
+          if (data.adminName !== user.name) {
+            setLockedBy(data.adminName);
+          } else {
+            hasLockRef.current = true;
+          }
+        }
+      };
+
+      const handleBrandUnlocked = (data) => {
+        if (data.brandId === id) {
+          setLockedBy(null);
+          socket.emit('lock_brand', { brandId: id, adminName: user.name });
+        }
+      };
+
+      socket.on('brand_locked', handleBrandLocked);
+      socket.on('brand_unlocked', handleBrandUnlocked);
+
+      return () => {
+        socket.off('brand_locked', handleBrandLocked);
+        socket.off('brand_unlocked', handleBrandUnlocked);
+        if (hasLockRef.current) {
+          socket.emit('unlock_brand', { brandId: id });
+        }
+      };
+    }
+  }, [id, socket, user]);
 
   const fetchBrandDetails = async () => {
     try {
@@ -45,6 +85,7 @@ const BrandDetails = () => {
 
   const handleStockInRequest = (e) => {
     e.preventDefault();
+    if (lockedBy) return;
     if (!stockInAmount || stockInAmount <= 0) return;
     setIsAddStockDialogOpen(true);
   };
@@ -59,7 +100,7 @@ const BrandDetails = () => {
       fetchTransactions();
     } catch (error) {
       console.error(error);
-      alert('Failed to add stock');
+      toast.error('Failed to add stock');
       setIsAddStockDialogOpen(false);
     }
   };
@@ -107,18 +148,20 @@ const BrandDetails = () => {
           
           <div className="flex flex-wrap gap-3 mt-6">
             <motion.button 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => navigate(`/brand/${id}/edit`)} 
-              className="px-5 py-2.5 bg-bg-secondary hover:bg-border/50 text-text-primary rounded-xl font-bold flex items-center transition-colors text-sm"
+              whileHover={!lockedBy ? { scale: 1.02 } : {}}
+              whileTap={!lockedBy ? { scale: 0.98 } : {}}
+              onClick={() => !lockedBy && navigate(`/brand/${id}/edit`)} 
+              disabled={!!lockedBy}
+              className={`px-5 py-2.5 rounded-xl font-bold flex items-center transition-colors text-sm ${lockedBy ? 'bg-bg-secondary text-text-secondary opacity-50 cursor-not-allowed' : 'bg-bg-secondary hover:bg-border/50 text-text-primary'}`}
             >
               <Edit size={16} className="mr-2" /> Edit Brand
             </motion.button>
             <motion.button 
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setIsDeleteDialogOpen(true)} 
-              className="px-5 py-2.5 bg-error/10 hover:bg-error/20 text-error rounded-xl font-bold flex items-center transition-colors text-sm"
+              whileHover={!lockedBy ? { scale: 1.02 } : {}}
+              whileTap={!lockedBy ? { scale: 0.98 } : {}}
+              onClick={() => !lockedBy && setIsDeleteDialogOpen(true)} 
+              disabled={!!lockedBy}
+              className={`px-5 py-2.5 rounded-xl font-bold flex items-center transition-colors text-sm ${lockedBy ? 'bg-error/5 text-error/50 opacity-50 cursor-not-allowed' : 'bg-error/10 hover:bg-error/20 text-error'}`}
             >
               <Trash2 size={16} className="mr-2" /> Delete Brand
             </motion.button>
@@ -144,19 +187,30 @@ const BrandDetails = () => {
             
             <div className="w-full h-px bg-border my-2"></div>
             
+            {lockedBy && (
+              <div className="mt-4 bg-warning-light border border-warning/20 text-warning p-3 rounded-xl flex items-start text-sm relative z-10">
+                <Lock className="mr-2 shrink-0 mt-0.5" size={16} />
+                <div>
+                  <p className="font-bold">Locked for Editing</p>
+                  <p>{lockedBy} is currently editing this brand.</p>
+                </div>
+              </div>
+            )}
+            
             <form onSubmit={handleStockInRequest} className="mt-4 relative z-10">
               <p className="text-xs font-bold text-text-secondary mb-3 uppercase tracking-wider">Quick Add Stock</p>
               <div className="flex gap-2">
                 <input 
                   type="number" 
                   min="1"
-                  className="flex-1 bg-bg-secondary border border-border rounded-xl px-4 text-sm font-bold text-text-primary focus:outline-none focus:border-primary/50" 
+                  className="flex-1 bg-bg-secondary border border-border rounded-xl px-4 text-sm font-bold text-text-primary focus:outline-none focus:border-primary/50 disabled:opacity-50" 
                   placeholder="Qty (e.g. 50)" 
                   value={stockInAmount}
                   onChange={(e) => setStockInAmount(e.target.value)}
+                  disabled={!!lockedBy}
                   required
                 />
-                <button type="submit" className="bg-primary hover:bg-primary-dark text-white rounded-xl p-3 shadow-md transition-colors active:scale-95">
+                <button type="submit" disabled={!!lockedBy} className={`bg-primary hover:bg-primary-dark text-white rounded-xl p-3 shadow-md transition-colors active:scale-95 ${lockedBy ? 'opacity-50 cursor-not-allowed' : ''}`}>
                   <PlusCircle size={20} />
                 </button>
               </div>

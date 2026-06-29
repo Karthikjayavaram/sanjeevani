@@ -24,6 +24,7 @@ app.use(express.json());
 app.set('io', io); // Make io accessible in routes
 
 const activeLocks = new Map(); // brandId -> adminId
+let billingLock = null; // { adminName, socketId, timestamp }
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -42,6 +43,20 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('lock_billing', ({ adminName }) => {
+    if (!billingLock) {
+      billingLock = { adminName, socketId: socket.id, timestamp: Date.now() };
+      io.emit('billing_locked', { adminName });
+    }
+  });
+
+  socket.on('unlock_billing', () => {
+    if (billingLock && billingLock.socketId === socket.id) {
+      billingLock = null;
+      io.emit('billing_unlocked');
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     for (const [brandId, lockInfo] of activeLocks.entries()) {
@@ -49,6 +64,10 @@ io.on('connection', (socket) => {
         activeLocks.delete(brandId);
         io.emit('brand_unlocked', { brandId });
       }
+    }
+    if (billingLock && billingLock.socketId === socket.id) {
+      billingLock = null;
+      io.emit('billing_unlocked');
     }
   });
 });
@@ -61,6 +80,10 @@ setInterval(() => {
       activeLocks.delete(brandId);
       io.emit('brand_unlocked', { brandId });
     }
+  }
+  if (billingLock && now - billingLock.timestamp > 5 * 60 * 1000) {
+    billingLock = null;
+    io.emit('billing_unlocked');
   }
 }, 60 * 1000);
 

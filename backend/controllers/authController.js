@@ -20,11 +20,11 @@ exports.loginUser = async (req, res) => {
     const adminEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.toLowerCase().trim() : '';
     if (adminEmail && emailInput === adminEmail && password === process.env.ADMIN_PASSWORD) {
       return res.json({
-        _id: 'admin-env-id',
+        _id: '000000000000000000000000',
         name: 'Administrator',
         email: process.env.ADMIN_EMAIL,
         role: 'admin',
-        token: generateToken('admin-env-id'),
+        token: generateToken('000000000000000000000000'),
       });
     }
 
