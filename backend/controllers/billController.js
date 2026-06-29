@@ -1,11 +1,14 @@
 const Bill = require('../models/Bill');
 const Brand = require('../models/Brand');
 const StockTransaction = require('../models/StockTransaction');
+const mongoose = require('mongoose');
 
 exports.createBill = async (req, res) => {
   try {
     const { billNumber, millName, partyName, items } = req.body;
-    const adminId = req.user.id;
+    const rawAdminId = req.user.id;
+    // Guard against non-ObjectId env admin IDs (e.g. 'admin-env-id')
+    const adminId = mongoose.Types.ObjectId.isValid(rawAdminId) ? rawAdminId : null;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });
@@ -133,7 +136,8 @@ exports.cancelBill = async (req, res) => {
       return res.status(404).json({ error: 'Bill not found' });
     }
 
-    const adminId = req.user.id;
+    const rawAdminId = req.user.id;
+    const adminId = mongoose.Types.ObjectId.isValid(rawAdminId) ? rawAdminId : null;
     const stockTransactions = [];
 
     // Restore stock
@@ -169,7 +173,8 @@ exports.cancelBill = async (req, res) => {
 exports.updateBill = async (req, res) => {
   try {
     const { millName, partyName, items } = req.body;
-    const adminId = req.user.id;
+    const rawAdminId = req.user.id;
+    const adminId = mongoose.Types.ObjectId.isValid(rawAdminId) ? rawAdminId : null;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });

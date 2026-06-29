@@ -57,42 +57,37 @@ exports.deleteBrand = async (req, res) => {
 
 // Stock In
 exports.stockIn = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { quantity } = req.body;
-    const adminId = req.user.id;
+    const rawAdminId = req.user.id;
+    // Guard against non-ObjectId env admin IDs (e.g. 'admin-env-id')
+    const adminId = mongoose.Types.ObjectId.isValid(rawAdminId) ? rawAdminId : null;
     
     if (!quantity || quantity <= 0) {
       return res.status(400).json({ error: 'Valid quantity is required' });
     }
 
-    const brand = await Brand.findById(req.params.id).session(session);
+    const brand = await Brand.findById(req.params.id);
     if (!brand) {
       return res.status(404).json({ error: 'Brand not found' });
     }
 
     const previousStock = brand.currentStock;
-    brand.currentStock += quantity;
+    brand.currentStock += Number(quantity);
     brand.lastUpdated = new Date();
-    await brand.save({ session });
+    await brand.save();
 
-    const transaction = await StockTransaction.create([{
+    const transaction = await StockTransaction.create({
       brand: brand._id,
       type: 'IN',
       quantity,
       previousStock,
       currentStock: brand.currentStock,
       admin: adminId,
-    }], { session });
-
-    await session.commitTransaction();
-    session.endSession();
+    });
 
     res.json({ message: 'Stock updated', brand, transaction });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
     res.status(500).json({ error: error.message });
   }
 };
