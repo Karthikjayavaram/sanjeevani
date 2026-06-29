@@ -1,5 +1,6 @@
-import { useState, useEffect, useContext, useRef } from 'react';
+import { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { SocketContext } from '../context/SocketContext';
 import { Plus, Save, Trash2, CheckCircle2, Package, Search, Clock, FileText, Lock } from 'lucide-react';
@@ -11,6 +12,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import ErrorDialog from '../components/ErrorDialog';
 
 const Billing = () => {
+  const navigate = useNavigate();
   // New Bill State
   const [brands, setBrands] = useState([]);
   const [billData, setBillData] = useState({
@@ -203,7 +205,13 @@ const Billing = () => {
                 <div className="col-span-full p-8 text-center text-text-secondary">No bills match your search.</div>
               ) : (
                 bills.map(bill => (
-                  <div key={bill._id} className="premium-card p-5 group flex flex-col justify-between">
+                  <motion.div
+                    key={bill._id}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(`/bills/${bill._id}`)}
+                    className="premium-card p-5 group flex flex-col justify-between cursor-pointer"
+                  >
                     <div>
                       <div className="flex items-start justify-between mb-3">
                         <span className="font-black text-text-primary text-lg tracking-tight">{bill.billNumber}</span>
@@ -212,14 +220,14 @@ const Billing = () => {
                       <p className="text-sm font-medium text-text-primary">{bill.partyName}</p>
                       <p className="text-sm text-text-secondary mb-4">{bill.millName}</p>
                     </div>
-                    
                     <div className="pt-4 border-t border-border flex items-center justify-between text-xs font-medium text-text-secondary">
                       <div className="flex items-center space-x-1">
                         <Clock size={14} />
                         <span>{format(new Date(bill.createdAt), 'MMM dd, yyyy - hh:mm a')}</span>
                       </div>
+                      <span className="text-primary font-bold group-hover:underline">View Details →</span>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               )}
             </div>

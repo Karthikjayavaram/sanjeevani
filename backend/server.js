@@ -23,11 +23,26 @@ app.use(express.json());
 // Socket.IO
 app.set('io', io); // Make io accessible in routes
 
-const activeLocks = new Map(); // brandId -> adminId
+const activeLocks = new Map(); // brandId -> lockInfo
 let billingLock = null; // { adminName, socketId, timestamp }
+const activeUsers = new Map(); // userId -> socketId (single-session enforcement)
 
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
+
+  // Single-session enforcement: kick old session if same user connects from new device
+  socket.on('register_user', ({ userId }) => {
+    if (userId && activeUsers.has(userId)) {
+      const oldSocketId = activeUsers.get(userId);
+      if (oldSocketId !== socket.id) {
+        // Tell the old device it's been logged out
+        io.to(oldSocketId).emit('session_expired', {
+          message: 'You have been logged out because this account was opened on another device.'
+        });
+      }
+    }
+    activeUsers.set(userId, socket.id);
+  });
 
   socket.on('lock_brand', ({ brandId, adminName }) => {
     if (!activeLocks.has(brandId)) {
@@ -59,6 +74,10 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    // Clean up single-session tracking
+    for (const [userId, sId] of activeUsers.entries()) {
+      if (sId === socket.id) activeUsers.delete(userId);
+    }
     for (const [brandId, lockInfo] of activeLocks.entries()) {
       if (lockInfo.socketId === socket.id) {
         activeLocks.delete(brandId);
