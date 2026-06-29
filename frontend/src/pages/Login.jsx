@@ -27,7 +27,7 @@ const Login = () => {
   };
 
   return (
-    <PageTransition className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-6 font-sans">
+    <PageTransition className="min-h-screen flex items-center justify-center bg-bg-secondary p-6 font-sans">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -39,11 +39,11 @@ const Login = () => {
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-600/5 rounded-full blur-3xl"></div>
         
         <div className="text-center relative z-10">
-          <div className="mx-auto h-14 w-14 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30">
+          <div className="mx-auto h-14 w-14 bg-primary rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/30">
             <Package size={28} className="text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Sanjeevani Agencies</h2>
-          <p className="mt-2 text-sm text-slate-500 font-medium">Enter your credentials to access the admin panel</p>
+          <h2 className="text-2xl font-bold text-text-primary tracking-tight">Sanjeevani Agencies</h2>
+          <p className="mt-2 text-sm text-text-secondary font-medium">Enter your credentials to access the admin panel</p>
         </div>
         
         <form className="mt-8 space-y-5 relative z-10" onSubmit={handleSubmit}>
@@ -71,15 +71,6 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
               />
               <label htmlFor="password" className="floating-label">Password</label>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center">
-              <input id="remember-me" type="checkbox" className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer" />
-              <label htmlFor="remember-me" className="ml-2 block text-sm font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
-                Remember me
-              </label>
             </div>
           </div>
 
