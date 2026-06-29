@@ -5,11 +5,13 @@ import { Download, TrendingUp, TrendingDown, Package2, Clock } from 'lucide-reac
 import { format, subDays, startOfWeek, startOfMonth } from 'date-fns';
 import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
+import TransactionDetailsDialog from '../components/TransactionDetailsDialog';
 
 const Summary = () => {
   const [summaryData, setSummaryData] = useState(null);
   const [filter, setFilter] = useState('today');
   const [loading, setLoading] = useState(true);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
@@ -50,6 +52,17 @@ const Summary = () => {
         <div className="h-10 bg-bg-secondary rounded w-1/4 mb-8"></div>
         <div className="flex space-x-2"><div className="h-10 bg-bg-secondary rounded w-20"></div><div className="h-10 bg-bg-secondary rounded w-20"></div></div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div className="h-32 bg-bg-secondary rounded-[18px]"></div><div className="h-32 bg-bg-secondary rounded-[18px]"></div><div className="h-32 bg-bg-secondary rounded-[18px]"></div></div>
+      </PageTransition>
+    );
+  }
+
+  if (!summaryData) {
+    return (
+      <PageTransition className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-error font-bold text-lg">Failed to load summary data</p>
+          <button onClick={fetchSummary} className="mt-4 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90">Retry</button>
+        </div>
       </PageTransition>
     );
   }
@@ -217,8 +230,63 @@ const Summary = () => {
               </div>
             </div>
           </div>
+
+          {/* All Individual Transactions */}
+          <div className="premium-card p-0 overflow-hidden mt-8">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-bg-secondary/30">
+              <h3 className="font-bold text-text-primary text-lg">Detailed Transactions</h3>
+              <div className="flex items-center space-x-2 text-sm text-text-secondary font-medium">
+                <Clock size={16} />
+                <span>For selected period</span>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {summaryData.allTransactions && summaryData.allTransactions.length > 0 ? (
+                summaryData.allTransactions.map(tx => (
+                  <div 
+                    key={tx._id} 
+                    onClick={() => setSelectedTransaction(tx)}
+                    className="flex justify-between items-center p-4 rounded-[14px] border border-border bg-bg-secondary/30 hover:bg-bg-secondary transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center">
+                      <div className={`h-12 w-12 rounded-[12px] flex items-center justify-center mr-4 shadow-sm ${tx.type === 'IN' ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary'}`}>
+                        {tx.type === 'IN' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm text-text-primary">
+                          {tx.brand?.name} - {tx.brand?.variant}
+                        </p>
+                        <p className="text-sm font-medium mt-0.5">
+                          {tx.type === 'IN' ? 'Stock Added' : 'Billed Out'} 
+                          <span className={`ml-2 text-xs font-black ${tx.type === 'IN' ? 'text-success' : 'text-primary'}`}>
+                            {tx.type === 'IN' ? '+' : '-'}{tx.quantity} Bags
+                          </span>
+                        </p>
+                        <p className="text-xs text-text-secondary mt-1 font-medium">{format(new Date(tx.createdAt), 'dd MMM yyyy, hh:mm a')} • By {tx.admin?.name || 'Admin'}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-text-secondary uppercase tracking-widest font-bold">Balance</p>
+                      <p className="font-black text-lg text-text-primary">{tx.currentStock}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-text-secondary py-12 font-medium border-2 border-dashed border-border rounded-xl">
+                  No individual transactions found for this period.
+                </div>
+              )}
+            </div>
+          </div>
         </motion.div>
       </AnimatePresence>
+
+      <TransactionDetailsDialog 
+        isOpen={!!selectedTransaction}
+        transaction={selectedTransaction}
+        onClose={() => setSelectedTransaction(null)}
+      />
     </PageTransition>
   );
 };

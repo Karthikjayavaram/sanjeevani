@@ -6,12 +6,15 @@ import { ArrowLeft, Edit, Trash2, PlusCircle, History, PackageOpen, TrendingUp, 
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const BrandDetails = () => {
   const { id } = useParams();
   const [brand, setBrand] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [stockInAmount, setStockInAmount] = useState('');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAddStockDialogOpen, setIsAddStockDialogOpen] = useState(false);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -40,30 +43,34 @@ const BrandDetails = () => {
     }
   };
 
-  const handleStockIn = async (e) => {
+  const handleStockInRequest = (e) => {
     e.preventDefault();
     if (!stockInAmount || stockInAmount <= 0) return;
+    setIsAddStockDialogOpen(true);
+  };
+
+  const handleStockInConfirm = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       await axios.post(`http://${window.location.hostname}:5001/api/brands/${id}/stock-in`, { quantity: Number(stockInAmount) }, config);
       setStockInAmount('');
+      setIsAddStockDialogOpen(false);
       fetchBrandDetails();
       fetchTransactions();
     } catch (error) {
       console.error(error);
       alert('Failed to add stock');
+      setIsAddStockDialogOpen(false);
     }
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this brand?')) {
-      try {
-        const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        await axios.delete(`http://${window.location.hostname}:5001/api/brands/${id}`, config);
-        navigate('/');
-      } catch (error) {
-        console.error(error);
-      }
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      await axios.delete(`${import.meta.env.VITE_API_URL}/brands/${id}`, config);
+      navigate('/');
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -110,7 +117,7 @@ const BrandDetails = () => {
             <motion.button 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleDelete} 
+              onClick={() => setIsDeleteDialogOpen(true)} 
               className="px-5 py-2.5 bg-error/10 hover:bg-error/20 text-error rounded-xl font-bold flex items-center transition-colors text-sm"
             >
               <Trash2 size={16} className="mr-2" /> Delete Brand
@@ -137,7 +144,7 @@ const BrandDetails = () => {
             
             <div className="w-full h-px bg-border my-2"></div>
             
-            <form onSubmit={handleStockIn} className="mt-4 relative z-10">
+            <form onSubmit={handleStockInRequest} className="mt-4 relative z-10">
               <p className="text-xs font-bold text-text-secondary mb-3 uppercase tracking-wider">Quick Add Stock</p>
               <div className="flex gap-2">
                 <input 
@@ -198,6 +205,28 @@ const BrandDetails = () => {
 
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        title="Delete Brand"
+        message={`Are you sure you want to delete ${brand.name}? This action cannot be undone.`}
+        confirmText="Delete Brand"
+        cancelText="Cancel"
+        isDangerous={true}
+        onConfirm={handleDelete}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={isAddStockDialogOpen}
+        title="Confirm Stock Addition"
+        message={`Are you sure you want to add ${stockInAmount} bags to ${brand.name} - ${brand.variant}?`}
+        confirmText="Add Stock"
+        cancelText="Cancel"
+        isDangerous={false}
+        onConfirm={handleStockInConfirm}
+        onCancel={() => setIsAddStockDialogOpen(false)}
+      />
     </PageTransition>
   );
 };

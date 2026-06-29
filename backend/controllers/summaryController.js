@@ -45,15 +45,23 @@ exports.getSummary = async (req, res) => {
     await Brand.populate(incomingTransactions, { path: '_id', select: 'name variant' });
     await Brand.populate(outgoingTransactions, { path: '_id', select: 'name variant' });
 
+    const allTransactions = await StockTransaction.find(dateFilter)
+      .populate('brand', 'name variant image')
+      .populate('admin', 'name')
+      .populate('referenceId')
+      .sort({ createdAt: -1 });
+
     res.json({
       totalIncoming,
       totalOutgoing,
       currentAvailableStock,
       incomingTransactions,
-      outgoingTransactions
+      outgoingTransactions,
+      allTransactions
     });
 
   } catch (error) {
+    console.error('Summary API Error:', error);
     res.status(500).json({ error: error.message });
   }
 };

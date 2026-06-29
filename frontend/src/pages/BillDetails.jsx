@@ -5,11 +5,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Printer, Edit2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const BillDetails = () => {
   const { id } = useParams();
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -31,10 +33,9 @@ const BillDetails = () => {
   };
 
   const handleCancel = async () => {
-    if (!window.confirm('Are you sure you want to cancel this bill? Stock will be restored.')) return;
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.delete(`http://${window.location.hostname}:5001/api/bills/${id}`, config);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/bills/${id}`, config);
       toast.success('Bill cancelled and stock restored');
       navigate(-1);
     } catch (error) {
@@ -74,7 +75,7 @@ const BillDetails = () => {
           <button onClick={handlePrint} className="p-2 bg-blue-100 text-blue-600 rounded-full">
             <Printer size={20} />
           </button>
-          <button onClick={handleCancel} className="p-2 bg-red-100 text-red-600 rounded-full">
+          <button onClick={() => setIsCancelDialogOpen(true)} className="p-2 bg-red-100 text-red-600 rounded-full">
             <Trash2 size={20} />
           </button>
         </div>
@@ -135,6 +136,17 @@ const BillDetails = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={isCancelDialogOpen}
+        title="Cancel Bill"
+        message="Are you sure you want to cancel this bill? The stock from this bill will be automatically restored."
+        confirmText="Cancel Bill"
+        cancelText="Close"
+        isDangerous={true}
+        onConfirm={handleCancel}
+        onCancel={() => setIsCancelDialogOpen(false)}
+      />
     </div>
   );
 };

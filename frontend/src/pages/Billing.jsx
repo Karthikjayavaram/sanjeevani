@@ -5,6 +5,7 @@ import { Plus, Save, Trash2, CheckCircle2, Package, Search, Clock, FileText } fr
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const Billing = () => {
   // New Bill State
@@ -18,6 +19,7 @@ const Billing = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [brandSearch, setBrandSearch] = useState('');
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   
   // Bill History State
   const [bills, setBills] = useState([]);
@@ -89,8 +91,13 @@ const Billing = () => {
     setItems(newItems);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmitRequest = (e) => {
     e.preventDefault();
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setIsConfirmDialogOpen(false);
     setLoading(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -192,7 +199,7 @@ const Billing = () => {
       </AnimatePresence>
 
       {/* New Bill Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmitRequest} className="space-y-6">
         <h3 className="text-sm font-bold text-text-secondary uppercase tracking-widest mt-8 mb-4">Create New Bill</h3>
         
         {/* Bill Info */}
@@ -333,6 +340,17 @@ const Billing = () => {
           <Save className="mr-2" /> {loading ? 'Saving...' : 'Complete Bill'}
         </motion.button>
       </form>
+
+      <ConfirmDialog
+        isOpen={isConfirmDialogOpen}
+        title="Confirm New Bill"
+        message={`Are you sure you want to bill these items to ${billData.partyName || 'the selected party'}?`}
+        confirmText="Confirm Bill"
+        cancelText="Cancel"
+        isDangerous={false}
+        onConfirm={handleConfirmSubmit}
+        onCancel={() => setIsConfirmDialogOpen(false)}
+      />
     </PageTransition>
   );
 };

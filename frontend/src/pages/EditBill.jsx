@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const EditBill = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const EditBill = () => {
   const [items, setItems] = useState([{ brand: '', quantity: '', id: Date.now() }]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -70,8 +72,13 @@ const EditBill = () => {
     setItems(newItems);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmitRequest = (e) => {
     e.preventDefault();
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setIsConfirmDialogOpen(false);
     setLoading(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -119,7 +126,7 @@ const EditBill = () => {
         <strong className="mr-2">Note:</strong> Modifying the bill will automatically recalculate and adjust the stock for all included brands.
       </motion.div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmitRequest} className="space-y-6">
         {/* Bill Info */}
         <div className="premium-card p-6 md:p-8 space-y-5">
           <div className="flex items-center space-x-3 mb-2 border-b border-border pb-4">
@@ -253,6 +260,17 @@ const EditBill = () => {
           <Save className="mr-2" /> {loading ? 'Saving...' : 'Update Bill'}
         </motion.button>
       </form>
+
+      <ConfirmDialog
+        isOpen={isConfirmDialogOpen}
+        title="Confirm Bill Update"
+        message={`Are you sure you want to update the details of this bill?`}
+        confirmText="Update Bill"
+        cancelText="Cancel"
+        isDangerous={false}
+        onConfirm={handleConfirmSubmit}
+        onCancel={() => setIsConfirmDialogOpen(false)}
+      />
     </PageTransition>
   );
 };

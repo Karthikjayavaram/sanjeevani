@@ -6,6 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Lock, ImagePlus, UploadCloud } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PageTransition from '../components/PageTransition';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { motion } from 'framer-motion';
 
 const AddEditBrand = () => {
@@ -20,6 +21,7 @@ const AddEditBrand = () => {
   });
   const [lockedBy, setLockedBy] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   
   const { user } = useContext(AuthContext);
   const socket = useContext(SocketContext);
@@ -110,8 +112,14 @@ const AddEditBrand = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmitRequest = (e) => {
     e.preventDefault();
+    if (lockedBy) return;
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmSave = async () => {
+    setIsConfirmDialogOpen(false);
     if (lockedBy) return; 
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -182,7 +190,7 @@ const AddEditBrand = () => {
       )}
 
       <div className="premium-card p-6 md:p-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmitRequest} className="space-y-6">
           <div className="space-y-5">
             <div className="relative">
               <input type="text" id="name" name="name" required value={formData.name} onChange={handleChange} disabled={!!lockedBy} className="floating-input" placeholder=" " />
@@ -256,6 +264,17 @@ const AddEditBrand = () => {
           </motion.button>
         </form>
       </div>
+
+      <ConfirmDialog
+        isOpen={isConfirmDialogOpen}
+        title={isEdit ? "Confirm Update" : "Confirm New Brand"}
+        message={isEdit ? `Are you sure you want to update the details for ${formData.name}?` : `Are you sure you want to create the new brand ${formData.name}?`}
+        confirmText={isEdit ? "Update Brand" : "Create Brand"}
+        cancelText="Cancel"
+        isDangerous={false}
+        onConfirm={handleConfirmSave}
+        onCancel={() => setIsConfirmDialogOpen(false)}
+      />
     </PageTransition>
   );
 };

@@ -111,9 +111,9 @@ const Dashboard = () => {
     <PageTransition className="p-4 md:p-8 space-y-8 max-w-[1400px] mx-auto pb-24 md:pb-8">
       {/* Header & Search */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="md:hidden">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Overview</h1>
-          <p className="text-sm text-slate-500">Welcome back, {user?.name}</p>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Sanjeevani Agencies</h1>
+          <p className="text-sm text-slate-500">Inventory & Billing Management</p>
         </div>
 
         <div className="relative flex-1 max-w-2xl group">
