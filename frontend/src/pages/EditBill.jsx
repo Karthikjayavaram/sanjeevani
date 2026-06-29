@@ -32,8 +32,8 @@ const EditBill = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const [brandsRes, billRes] = await Promise.all([
-        axios.get(`http://${window.location.hostname}:5001/api/brands`, config),
-        axios.get(`http://${window.location.hostname}:5001/api/bills/${id}`, config)
+        axios.get(`${import.meta.env.VITE_API_URL}/brands`, config),
+        axios.get(`${import.meta.env.VITE_API_URL}/bills/${id}`, config)
       ]);
       setBrands(brandsRes.data);
       
@@ -88,7 +88,7 @@ const EditBill = () => {
         items: items.map(item => ({ brand: item.brand, quantity: Number(item.quantity) }))
       };
 
-      await axios.put(`http://${window.location.hostname}:5001/api/bills/${id}`, payload, config);
+      await axios.put(`${import.meta.env.VITE_API_URL}/bills/${id}`, payload, config);
       toast.success('Bill updated successfully!');
       navigate(-1);
     } catch (error) {

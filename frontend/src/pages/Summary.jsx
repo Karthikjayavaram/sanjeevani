@@ -37,7 +37,7 @@ const Summary = () => {
         startDate = startOfMonth(new Date());
       }
 
-      const res = await axios.get(`http://${window.location.hostname}:5001/api/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, config);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, config);
       setSummaryData(res.data);
     } catch (error) {
       console.error(error);

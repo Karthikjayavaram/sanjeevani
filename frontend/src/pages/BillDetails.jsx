@@ -22,7 +22,7 @@ const BillDetails = () => {
   const fetchBill = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://${window.location.hostname}:5001/api/bills/${id}`, config);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/bills/${id}`, config);
       setBill(res.data);
     } catch (error) {
       toast.error('Failed to load bill');

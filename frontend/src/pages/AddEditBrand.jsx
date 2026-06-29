@@ -93,7 +93,7 @@ const AddEditBrand = () => {
   const fetchBrandDetails = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://${window.location.hostname}:5001/api/brands/${id}`, config);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/brands/${id}`, config);
       const data = res.data;
       setFormData({
         name: data.name || '',
@@ -124,11 +124,11 @@ const AddEditBrand = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       if (isEdit) {
-        await axios.put(`http://${window.location.hostname}:5001/api/brands/${id}`, formData, config);
+        await axios.put(`${import.meta.env.VITE_API_URL}/brands/${id}`, formData, config);
         if (socket) socket.emit('unlock_brand', { brandId: id });
         toast.success('Brand updated successfully');
       } else {
-        await axios.post(`http://${window.location.hostname}:5001/api/brands`, formData, config);
+        await axios.post(`${import.meta.env.VITE_API_URL}/brands`, formData, config);
         toast.success('Brand added successfully');
       }
       navigate(-1);
@@ -147,7 +147,7 @@ const AddEditBrand = () => {
 
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'multipart/form-data' } };
-      const res = await axios.post(`http://${window.location.hostname}:5001/api/upload`, uploadData, config);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/upload`, uploadData, config);
       setFormData(prev => ({ ...prev, image: res.data.url }));
       toast.success('Image uploaded successfully');
     } catch (error) {

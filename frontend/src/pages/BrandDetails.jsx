@@ -26,7 +26,7 @@ const BrandDetails = () => {
   const fetchBrandDetails = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://${window.location.hostname}:5001/api/brands/${id}`, config);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/brands/${id}`, config);
       setBrand(res.data);
     } catch (error) {
       console.error(error);
@@ -36,7 +36,7 @@ const BrandDetails = () => {
   const fetchTransactions = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://${window.location.hostname}:5001/api/brands/${id}/transactions`, config);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/brands/${id}/transactions`, config);
       setTransactions(res.data);
     } catch (error) {
       console.error(error);
@@ -52,7 +52,7 @@ const BrandDetails = () => {
   const handleStockInConfirm = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post(`http://${window.location.hostname}:5001/api/brands/${id}/stock-in`, { quantity: Number(stockInAmount) }, config);
+      await axios.post(`${import.meta.env.VITE_API_URL}/brands/${id}/stock-in`, { quantity: Number(stockInAmount) }, config);
       setStockInAmount('');
       setIsAddStockDialogOpen(false);
       fetchBrandDetails();
