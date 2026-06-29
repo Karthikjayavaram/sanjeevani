@@ -181,21 +181,33 @@ const Summary = () => {
                       const ledgerMap = new Map();
                       
                       summaryData.incomingTransactions.forEach(item => {
-                        ledgerMap.set(item._id._id, { 
-                          name: item._id.name, 
-                          variant: item._id.variant, 
-                          incoming: item.totalQuantity, 
-                          outgoing: 0 
-                        });
+                        const brandId = item._id ? item._id._id : 'deleted-brand';
+                        const brandName = item._id ? item._id.name : 'Deleted Brand';
+                        const brandVariant = item._id ? item._id.variant : '';
+
+                        if (ledgerMap.has(brandId)) {
+                          ledgerMap.get(brandId).incoming += item.totalQuantity;
+                        } else {
+                          ledgerMap.set(brandId, { 
+                            name: brandName, 
+                            variant: brandVariant, 
+                            incoming: item.totalQuantity, 
+                            outgoing: 0 
+                          });
+                        }
                       });
                       
                       summaryData.outgoingTransactions.forEach(item => {
-                        if (ledgerMap.has(item._id._id)) {
-                          ledgerMap.get(item._id._id).outgoing = item.totalQuantity;
+                        const brandId = item._id ? item._id._id : 'deleted-brand';
+                        const brandName = item._id ? item._id.name : 'Deleted Brand';
+                        const brandVariant = item._id ? item._id.variant : '';
+
+                        if (ledgerMap.has(brandId)) {
+                          ledgerMap.get(brandId).outgoing += item.totalQuantity;
                         } else {
-                          ledgerMap.set(item._id._id, { 
-                            name: item._id.name, 
-                            variant: item._id.variant, 
+                          ledgerMap.set(brandId, { 
+                            name: brandName, 
+                            variant: brandVariant, 
                             incoming: 0, 
                             outgoing: item.totalQuantity 
                           });
@@ -255,7 +267,7 @@ const Summary = () => {
                       </div>
                       <div>
                         <p className="font-bold text-sm text-text-primary">
-                          {tx.brand?.name} - {tx.brand?.variant}
+                          {tx.brand ? `${tx.brand.name} - ${tx.brand.variant}` : 'Deleted Brand'}
                         </p>
                         <p className="text-sm font-medium mt-0.5">
                           {tx.type === 'IN' ? 'Stock Added' : 'Billed Out'} 
