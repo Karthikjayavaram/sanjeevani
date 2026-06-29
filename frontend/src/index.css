@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  /* Exact Colors from Prompt */
+  --color-primary: #2563EB;
+  --color-secondary: #60A5FA;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-border: #E5E7EB;
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F8FAFC;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-secondary text-text-primary transition-colors duration-300 font-sans;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .premium-card {
+    @apply bg-bg-primary rounded-[18px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] transition-all duration-300 border border-border;
+  }
+  
+  .glass-card {
+    @apply bg-bg-primary rounded-[18px] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all duration-300 border border-border;
+  }
+  
+  .btn-primary {
+    @apply bg-primary hover:bg-[#1D4ED8] text-white font-medium py-3.5 px-6 rounded-xl shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-[2px] active:translate-y-0 active:scale-[0.98] transition-all duration-200 flex items-center justify-center;
+  }
+  
+  .btn-success {
+    @apply bg-success hover:bg-[#059669] text-white font-medium py-3.5 px-6 rounded-xl shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:-translate-y-[2px] active:translate-y-0 active:scale-[0.98] transition-all duration-200 flex items-center justify-center;
+  }
+
+  .btn-warning {
+    @apply bg-warning hover:bg-[#D97706] text-white font-medium py-3.5 px-6 rounded-xl shadow-[0_4px_14px_0_rgba(245,158,11,0.39)] hover:-translate-y-[2px] active:translate-y-0 active:scale-[0.98] transition-all duration-200 flex items-center justify-center;
+  }
+
+  .btn-danger {
+    @apply bg-error hover:bg-[#DC2626] text-white font-medium py-3.5 px-6 rounded-xl shadow-[0_4px_14px_0_rgba(239,68,68,0.39)] hover:-translate-y-[2px] active:translate-y-0 active:scale-[0.98] transition-all duration-200 flex items-center justify-center;
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-primary text-primary hover:bg-bg-secondary font-medium py-3.5 px-6 rounded-xl transition-all duration-200 flex items-center justify-center;
+  }
+  
+  .input-field {
+    @apply w-full bg-white border border-border rounded-xl px-4 py-3.5 text-base text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-sm;
+  }
+
+  .input-label {
+    @apply block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide;
+  }
+
+  /* Floating Labels Pattern */
+  .floating-input {
+    @apply block px-4 pb-2.5 pt-5 w-full text-base text-text-primary bg-white rounded-xl border border-border appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-sm;
+  }
+
+  .floating-label {
+    @apply absolute text-sm text-text-secondary duration-300 transform -translate-y-4 scale-75 top-4 z-10 origin-[0] start-4 cursor-text pointer-events-none;
+  }
+
+  .floating-input:placeholder-shown ~ .floating-label {
+    @apply scale-100 -translate-y-1;
+  }
+
+  .floating-input:focus ~ .floating-label {
+    @apply scale-75 -translate-y-4 text-primary;
+  }
+}
+
+/* Hide scrollbar for clean UI but keep functionality */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
