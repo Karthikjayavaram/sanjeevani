@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Package, ArrowRight } from 'lucide-react';
+import { Package, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PageTransition from '../components/PageTransition';
 import { motion } from 'framer-motion';
@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -63,14 +64,22 @@ const Login = () => {
             <div className="relative">
               <input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
-                className="floating-input"
+                className="floating-input pr-12"
                 placeholder=" "
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <label htmlFor="password" className="floating-label">Password</label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary p-1 focus:outline-none transition-colors"
+                tabIndex="-1"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
@@ -96,3 +105,4 @@ const Login = () => {
 };
 
 export default Login;
+

@@ -23,7 +23,7 @@ const BrandDetails = () => {
   const fetchBrandDetails = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://localhost:5001/api/brands/${id}`, config);
+      const res = await axios.get(`http://${window.location.hostname}:5001/api/brands/${id}`, config);
       setBrand(res.data);
     } catch (error) {
       console.error(error);
@@ -33,7 +33,7 @@ const BrandDetails = () => {
   const fetchTransactions = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://localhost:5001/api/brands/${id}/transactions`, config);
+      const res = await axios.get(`http://${window.location.hostname}:5001/api/brands/${id}/transactions`, config);
       setTransactions(res.data);
     } catch (error) {
       console.error(error);
@@ -45,7 +45,7 @@ const BrandDetails = () => {
     if (!stockInAmount || stockInAmount <= 0) return;
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.post(`http://localhost:5001/api/brands/${id}/stock-in`, { quantity: Number(stockInAmount) }, config);
+      await axios.post(`http://${window.location.hostname}:5001/api/brands/${id}/stock-in`, { quantity: Number(stockInAmount) }, config);
       setStockInAmount('');
       fetchBrandDetails();
       fetchTransactions();
@@ -59,7 +59,7 @@ const BrandDetails = () => {
     if (window.confirm('Are you sure you want to delete this brand?')) {
       try {
         const config = { headers: { Authorization: `Bearer ${user.token}` } };
-        await axios.delete(`http://localhost:5001/api/brands/${id}`, config);
+        await axios.delete(`http://${window.location.hostname}:5001/api/brands/${id}`, config);
         navigate('/');
       } catch (error) {
         console.error(error);
@@ -203,3 +203,4 @@ const BrandDetails = () => {
 };
 
 export default BrandDetails;
+

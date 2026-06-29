@@ -15,3 +15,4 @@ const PageTransition = ({ children, className = "" }) => {
 };
 
 export default PageTransition;
+

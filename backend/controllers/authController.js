@@ -11,9 +11,10 @@ const generateToken = (id) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const emailInput = email.toLowerCase().trim();
 
     // First check hardcoded credentials from .env
-    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+    if (emailInput === process.env.ADMIN_EMAIL.toLowerCase().trim() && password === process.env.ADMIN_PASSWORD) {
       return res.json({
         _id: 'admin-env-id',
         name: 'Administrator',
@@ -24,7 +25,7 @@ exports.loginUser = async (req, res) => {
     }
 
     // Fallback to database lookup
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: emailInput });
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
         _id: user.id,

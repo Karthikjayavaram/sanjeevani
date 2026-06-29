@@ -73,8 +73,8 @@ const Dashboard = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       const [statsRes, brandsRes] = await Promise.all([
-        axios.get(`http://localhost:5001/api/summary/dashboard`, config),
-        axios.get(`http://localhost:5001/api/brands`, config)
+        axios.get(`http://${window.location.hostname}:5001/api/summary/dashboard`, config),
+        axios.get(`http://${window.location.hostname}:5001/api/brands`, config)
       ]);
       setStats(statsRes.data);
       setBrands(brandsRes.data);
@@ -89,7 +89,7 @@ const Dashboard = () => {
   const performSearch = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://localhost:5001/api/search?q=${searchQuery}`, config);
+      const res = await axios.get(`http://${window.location.hostname}:5001/api/search?q=${searchQuery}`, config);
       setSearchResults(res.data);
     } catch (error) {
       console.error(error);
@@ -236,3 +236,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

@@ -35,7 +35,7 @@ const Summary = () => {
         startDate = startOfMonth(new Date());
       }
 
-      const res = await axios.get(`http://localhost:5001/api/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, config);
+      const res = await axios.get(`http://${window.location.hostname}:5001/api/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, config);
       setSummaryData(res.data);
     } catch (error) {
       console.error(error);
@@ -224,3 +224,4 @@ const Summary = () => {
 };
 
 export default Summary;
+

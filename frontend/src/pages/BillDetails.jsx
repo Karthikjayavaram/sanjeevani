@@ -20,7 +20,7 @@ const BillDetails = () => {
   const fetchBill = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://localhost:5001/api/bills/${id}`, config);
+      const res = await axios.get(`http://${window.location.hostname}:5001/api/bills/${id}`, config);
       setBill(res.data);
     } catch (error) {
       toast.error('Failed to load bill');
@@ -34,7 +34,7 @@ const BillDetails = () => {
     if (!window.confirm('Are you sure you want to cancel this bill? Stock will be restored.')) return;
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      await axios.delete(`http://localhost:5001/api/bills/${id}`, config);
+      await axios.delete(`http://${window.location.hostname}:5001/api/bills/${id}`, config);
       toast.success('Bill cancelled and stock restored');
       navigate(-1);
     } catch (error) {
@@ -140,3 +140,4 @@ const BillDetails = () => {
 };
 
 export default BillDetails;
+

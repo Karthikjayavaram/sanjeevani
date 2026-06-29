@@ -49,7 +49,7 @@ const Billing = () => {
   const fetchBrands = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://localhost:5001/api/brands`, config);
+      const res = await axios.get(`http://${window.location.hostname}:5001/api/brands`, config);
       setBrands(res.data);
     } catch (error) {
       console.error('Error fetching brands:', error);
@@ -60,7 +60,7 @@ const Billing = () => {
     setLoadingBills(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
-      const res = await axios.get(`http://localhost:5001/api/bills?search=${billSearchQuery}`, config);
+      const res = await axios.get(`http://${window.location.hostname}:5001/api/bills?search=${billSearchQuery}`, config);
       setBills(res.data);
     } catch (error) {
       console.error('Error fetching bills:', error);
@@ -100,7 +100,7 @@ const Billing = () => {
         items: items.map(item => ({ brand: item.brand, quantity: Number(item.quantity) }))
       };
 
-      await axios.post(`http://localhost:5001/api/bills`, payload, config);
+      await axios.post(`http://${window.location.hostname}:5001/api/bills`, payload, config);
       setSuccess(true);
       
       setBillData({ billNumber: '', millName: '', partyName: '' });
@@ -338,3 +338,4 @@ const Billing = () => {
 };
 
 export default Billing;
+
