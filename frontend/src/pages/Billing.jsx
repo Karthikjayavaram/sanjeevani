@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import PageTransition from '../components/PageTransition';
 import ConfirmDialog from '../components/ConfirmDialog';
+import ErrorDialog from '../components/ErrorDialog';
 
 const Billing = () => {
   // New Bill State
@@ -22,6 +23,7 @@ const Billing = () => {
   const [success, setSuccess] = useState(false);
   const [brandSearch, setBrandSearch] = useState('');
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [errorDialog, setErrorDialog] = useState({ open: false, title: '', message: '' });
   
   // Bill History State
   const [bills, setBills] = useState([]);
@@ -153,7 +155,11 @@ const Billing = () => {
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.error || 'Failed to create bill');
+      setErrorDialog({
+        open: true,
+        title: 'Bill Creation Failed',
+        message: error.response?.data?.error || 'Failed to create bill. Please try again.'
+      });
     }
     setLoading(false);
   };
@@ -405,6 +411,12 @@ const Billing = () => {
         isDangerous={false}
         onConfirm={handleConfirmSubmit}
         onCancel={() => setIsConfirmDialogOpen(false)}
+      />
+      <ErrorDialog
+        isOpen={errorDialog.open}
+        title={errorDialog.title}
+        message={errorDialog.message}
+        onClose={() => setErrorDialog({ open: false, title: '', message: '' })}
       />
     </PageTransition>
   );

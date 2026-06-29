@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import PageTransition from '../components/PageTransition';
 import ConfirmDialog from '../components/ConfirmDialog';
+import ErrorDialog from '../components/ErrorDialog';
 
 const BrandDetails = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const BrandDetails = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAddStockDialogOpen, setIsAddStockDialogOpen] = useState(false);
   const [lockedBy, setLockedBy] = useState(null);
+  const [errorDialog, setErrorDialog] = useState({ open: false, title: '', message: '' });
   
   const { user } = useContext(AuthContext);
   const socket = useContext(SocketContext);
@@ -100,7 +102,11 @@ const BrandDetails = () => {
       fetchTransactions();
     } catch (error) {
       console.error(error);
-      toast.error('Failed to add stock');
+      setErrorDialog({
+        open: true,
+        title: 'Stock In Failed',
+        message: error.response?.data?.error || 'Failed to add stock. Please try again.'
+      });
       setIsAddStockDialogOpen(false);
     }
   };
@@ -280,6 +286,12 @@ const BrandDetails = () => {
         isDangerous={false}
         onConfirm={handleStockInConfirm}
         onCancel={() => setIsAddStockDialogOpen(false)}
+      />
+      <ErrorDialog
+        isOpen={errorDialog.open}
+        title={errorDialog.title}
+        message={errorDialog.message}
+        onClose={() => setErrorDialog({ open: false, title: '', message: '' })}
       />
     </PageTransition>
   );
