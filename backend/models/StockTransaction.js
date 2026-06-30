@@ -7,6 +7,7 @@ const stockTransactionSchema = new mongoose.Schema({
   previousStock: { type: Number, required: true },
   currentStock: { type: Number, required: true },
   referenceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bill' }, // null if IN
+  companyName: { type: String, default: null }, // company the stock came from (for IN)
   admin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 

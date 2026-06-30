@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Search, Plus, Package, TrendingUp, TrendingDown, AlertTriangle, FileText, ChevronRight, Inbox, Clock, Edit2 } from 'lucide-react';
+import { Search, Plus, Package, TrendingUp, TrendingDown, AlertTriangle, FileText, ChevronRight, Inbox, Clock, Edit2, Tag, X } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,6 +22,19 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
+
+const VARIANT_FILTERS = [
+  '5 kg with handle',
+  '5 kg without handle',
+  '10 kg with handle',
+  '10 kg without handle',
+  '26 kg 2 side box',
+  '26 kg 1 side',
+  '30 kg 2 side box',
+  '26 kg Fiber non woven bags',
+  '26 kg 3D metallic bags',
+  '50 kg bags',
+];
 
 const SkeletonLoader = () => (
   <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
@@ -50,6 +63,7 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeVariant, setActiveVariant] = useState(null);
   
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -98,7 +112,15 @@ const Dashboard = () => {
 
   if (loading) return <SkeletonLoader />;
 
-  const displayBrands = searchResults ? searchResults.brands : brands;
+  // Determine which brands to display
+  let displayBrands = searchResults ? searchResults.brands : brands;
+
+  // Apply variant filter (only when not in search mode)
+  if (!searchResults && activeVariant) {
+    displayBrands = displayBrands.filter(b =>
+      b.variant?.toLowerCase() === activeVariant.toLowerCase()
+    );
+  }
 
   const getImageUrl = (url) => {
     if (!url || url.includes('source.unsplash.com')) {
@@ -107,13 +129,19 @@ const Dashboard = () => {
     return url;
   };
 
+  const handleVariantClick = (variant) => {
+    setActiveVariant(prev => prev === variant ? null : variant);
+    setSearchQuery('');
+    setSearchResults(null);
+  };
+
   return (
-    <PageTransition className="p-4 md:p-8 space-y-8 max-w-[1400px] mx-auto pb-24 md:pb-8">
+    <PageTransition className="p-4 md:p-8 space-y-6 max-w-[1400px] mx-auto pb-24 md:pb-8">
       {/* Header & Search */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Sanjeevani Agencies</h1>
-          <p className="text-sm text-slate-500">Inventory & Billing Management</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Sanjeevani Veeresh</h1>
+          <p className="text-sm text-slate-500">Inventory &amp; Billing Management</p>
         </div>
 
         <div className="relative flex-1 max-w-2xl group">
@@ -146,6 +174,48 @@ const Dashboard = () => {
         <Plus size={24} />
       </motion.button>
 
+      {/* Variant Filter Chips */}
+      <AnimatePresence>
+        {!searchQuery && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="space-y-2"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Tag size={13} className="text-slate-400" />
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Filter by Variant</span>
+              {activeVariant && (
+                <button
+                  onClick={() => setActiveVariant(null)}
+                  className="ml-auto flex items-center gap-1 text-xs font-bold text-primary hover:text-primary-dark transition-colors"
+                >
+                  <X size={12} /> Clear
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {VARIANT_FILTERS.map(variant => (
+                <motion.button
+                  key={variant}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleVariantClick(variant)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                    activeVariant === variant
+                      ? 'bg-primary text-white border-primary shadow-md shadow-primary/30'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-primary/50 hover:text-primary hover:bg-primary/5'
+                  }`}
+                >
+                  {variant}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div 
         key="dashboard-content"
         variants={containerVariants}
@@ -153,7 +223,6 @@ const Dashboard = () => {
         animate="show"
         className="space-y-10"
       >
-
 
         {/* Bill Search Results */}
         {searchQuery && searchResults?.bills?.length > 0 && (
@@ -180,7 +249,11 @@ const Dashboard = () => {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-              {searchQuery ? `Brands matching "${searchQuery}"` : 'Inventory Overview'}
+              {searchQuery
+                ? `Brands matching "${searchQuery}"`
+                : activeVariant
+                  ? <span className="flex items-center gap-2">{activeVariant} <span className="text-sm font-medium text-slate-400">({displayBrands.length} brands)</span></span>
+                  : 'Inventory Overview'}
             </h2>
           </div>
           
@@ -224,8 +297,20 @@ const Dashboard = () => {
               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                 <Search size={32} className="text-slate-400" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1">No brands found</h3>
-              <p className="text-slate-500 text-sm">We couldn't find any items matching your criteria.</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">
+                {activeVariant ? `No brands with variant "${activeVariant}"` : 'No brands found'}
+              </h3>
+              <p className="text-slate-500 text-sm">
+                {activeVariant ? 'Try selecting a different variant or clear the filter.' : "We couldn't find any items matching your criteria."}
+              </p>
+              {activeVariant && (
+                <button
+                  onClick={() => setActiveVariant(null)}
+                  className="mt-4 px-4 py-2 bg-primary/10 text-primary font-bold rounded-xl text-sm hover:bg-primary/20 transition-colors"
+                >
+                  Clear Filter
+                </button>
+              )}
             </motion.div>
           )}
         </div>
@@ -236,4 +321,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

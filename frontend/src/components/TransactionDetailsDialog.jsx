@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, TrendingUp, TrendingDown, Package2, User, FileText } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Package2, User, FileText, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 
@@ -95,6 +95,22 @@ const TransactionDetailsDialog = ({ isOpen, transaction, onClose }) => {
                       <span className="text-sm font-medium">Party Name</span>
                     </div>
                     <p className="font-bold text-text-primary text-right">{transaction.referenceId.partyName}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Company Info (if IN and companyName exists) */}
+            {!isOut && transaction.companyName && (
+              <div>
+                <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Stock Source</h4>
+                <div className="bg-success/5 border border-success/20 p-4 rounded-xl flex items-center space-x-3">
+                  <div className="p-2 bg-success/10 rounded-xl">
+                    <Building2 size={18} className="text-success" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-secondary font-medium uppercase tracking-wider">Company Name</p>
+                    <p className="font-bold text-text-primary">{transaction.companyName}</p>
                   </div>
                 </div>
               </div>

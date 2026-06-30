@@ -37,7 +37,7 @@ const Layout = () => {
           <div className="bg-primary p-2.5 rounded-[14px] shadow-[0_4px_14px_0_rgba(37,99,235,0.39)]">
             <Package className="text-white" size={24} />
           </div>
-          <span className="text-xl font-bold text-text-primary tracking-tight">Sanjeevani</span>
+          <span className="text-xl font-bold text-text-primary tracking-tight">Sanjeevani Veeresh</span>
         </div>
         
         <div className="flex-1 px-5 py-6 space-y-2 overflow-y-auto">

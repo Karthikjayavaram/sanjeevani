@@ -43,7 +43,7 @@ const Login = () => {
           <div className="mx-auto h-14 w-14 bg-primary rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/30">
             <Package size={28} className="text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-text-primary tracking-tight">Sanjeevani Agencies</h2>
+          <h2 className="text-2xl font-bold text-text-primary tracking-tight">Sanjeevani Veeresh</h2>
           <p className="mt-2 text-sm text-text-secondary font-medium">Enter your credentials to access the admin panel</p>
         </div>
         

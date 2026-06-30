@@ -7,6 +7,7 @@ import Billing from './pages/Billing';
 import BillDetails from './pages/BillDetails';
 import EditBill from './pages/EditBill';
 import Summary from './pages/Summary';
+import Alerts from './pages/Alerts';
 import Layout from './components/Layout';
 import { useContext } from 'react';
 import { AuthContext } from './context/AuthContext';
@@ -35,8 +36,7 @@ function App() {
           <Route path="bills/:id" element={<BillDetails />} />
           <Route path="bills/:id/edit" element={<EditBill />} />
           <Route path="summary" element={<Summary />} />
-          {/* Notifications placeholder */}
-          <Route path="notifications" element={<div className="p-8 text-center text-gray-500">Notifications coming soon...</div>} />
+          <Route path="notifications" element={<Alerts />} />
         </Route>
         
         <Route path="*" element={<Navigate to="/" replace />} />

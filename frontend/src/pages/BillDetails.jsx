@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -96,7 +96,7 @@ const BillDetails = () => {
           <div>
             <div className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-xs font-bold inline-block mb-3 tracking-widest uppercase">Tax Invoice</div>
             <h2 className="text-3xl font-black text-text-primary tracking-tight">{bill.millName}</h2>
-            <p className="text-text-secondary mt-1 font-medium">Rice GoDown — Bill of Supply</p>
+            <p className="text-text-secondary mt-1 font-medium">Sanjeevani Veeresh — Bill of Supply</p>
           </div>
           <div className="text-left md:text-right mt-4 md:mt-0">
             <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">Bill Number</p>

@@ -58,7 +58,7 @@ exports.deleteBrand = async (req, res) => {
 // Stock In
 exports.stockIn = async (req, res) => {
   try {
-    const { quantity } = req.body;
+    const { quantity, companyName } = req.body;
     const rawAdminId = req.user.id;
     // isValid() incorrectly accepts 12-char strings; use strict 24-char hex check
     const isValidObjectId = rawAdminId && /^[a-f\d]{24}$/i.test(rawAdminId);
@@ -84,6 +84,7 @@ exports.stockIn = async (req, res) => {
       quantity,
       previousStock,
       currentStock: brand.currentStock,
+      companyName: companyName || null,
       admin: adminId,
     });
 
