@@ -1,11 +1,31 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { Home, Receipt, BarChart2, Bell, Package, Search, Menu, User } from 'lucide-react';
-import { useContext } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 const Layout = () => {
   const { user, logout } = useContext(AuthContext);
+  const [hasAlerts, setHasAlerts] = useState(false);
+
+  useEffect(() => {
+    const fetchAlertStatus = async () => {
+      try {
+        if (!user?.token) return;
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/brands`, config);
+        const alertsExist = res.data.some(b => b.currentStock <= 0 || (b.currentStock > 0 && b.currentStock <= (b.minStockAlert || 0)));
+        setHasAlerts(alertsExist);
+      } catch (error) {
+        console.error("Failed to check alert status:", error);
+      }
+    };
+    
+    fetchAlertStatus();
+    const interval = setInterval(fetchAlertStatus, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [user]);
 
   const NavItems = () => (
     <>
@@ -22,7 +42,10 @@ const Layout = () => {
         <span className="md:block hidden tracking-wide">Summary</span>
       </NavLink>
       <NavLink to="/notifications" className={({ isActive }) => `flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 ${isActive ? 'bg-primary/10 text-primary font-bold' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary font-medium'}`}>
-        <Bell size={22} />
+        <div className="relative">
+          <Bell size={22} />
+          {hasAlerts && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-error border-2 border-white rounded-full"></span>}
+        </div>
         <span className="md:block hidden tracking-wide">Alerts</span>
       </NavLink>
     </>
@@ -64,19 +87,6 @@ const Layout = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative pb-[80px] md:pb-0">
         
-        {/* Top Header */}
-        <header className="hidden md:flex items-center justify-between px-10 py-5 bg-bg-primary/80 backdrop-blur-xl border-b border-border z-10 sticky top-0">
-          <div className="flex items-center text-text-secondary">
-             <Menu size={24} className="mr-5 cursor-pointer hover:text-text-primary transition-colors" />
-             <h2 className="text-xl font-bold text-text-primary tracking-tight">Inventory</h2>
-          </div>
-          <div className="flex items-center space-x-5">
-             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="p-2.5 text-text-secondary hover:bg-bg-secondary hover:text-primary rounded-full transition-colors relative">
-               <Bell size={22} />
-               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-error border-2 border-white rounded-full"></span>
-             </motion.button>
-          </div>
-        </header>
 
         {/* Content Outlet */}
         <main className="flex-1 overflow-y-auto w-full h-full scrollbar-hide">
@@ -112,7 +122,7 @@ const Layout = () => {
             <motion.div whileTap={{ scale: 0.9 }} className="flex flex-col items-center justify-center w-[48px] h-[48px]">
               <div className="relative">
                 <Bell size={24} />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error border-2 border-white rounded-full"></span>
+                {hasAlerts && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error border-2 border-white rounded-full"></span>}
               </div>
               <span className="text-[11px] mt-1 font-semibold tracking-wide">Alerts</span>
             </motion.div>
