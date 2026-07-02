@@ -1,82 +1,64 @@
-import React, { useState, useCallback } from 'react';
-import Cropper from 'react-easy-crop';
+import React, { useState, useRef } from 'react';
+import ReactCrop from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
-const createImage = (url) =>
-  new Promise((resolve, reject) => {
-    const image = new Image();
-    image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', (error) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous');
-    image.src = url;
-  });
-
-function getRadianAngle(degreeValue) {
-  return (degreeValue * Math.PI) / 180;
-}
-
-export async function getCroppedImg(imageSrc, pixelCrop, rotation = 0) {
-  const image = await createImage(imageSrc);
+async function getCroppedImg(imageElement, crop) {
   const canvas = document.createElement('canvas');
+  const scaleX = imageElement.naturalWidth / imageElement.width;
+  const scaleY = imageElement.naturalHeight / imageElement.height;
+  
+  // if crop width/height is missing or 0, just use the whole image size
+  const actualCrop = (!crop || crop.width === 0 || crop.height === 0)
+    ? { x: 0, y: 0, width: imageElement.width, height: imageElement.height }
+    : crop;
+
+  canvas.width = actualCrop.width * scaleX;
+  canvas.height = actualCrop.height * scaleY;
   const ctx = canvas.getContext('2d');
 
-  const maxSize = Math.max(image.width, image.height);
-  const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
-
-  canvas.width = safeArea;
-  canvas.height = safeArea;
-
-  ctx.translate(safeArea / 2, safeArea / 2);
-  ctx.rotate(getRadianAngle(rotation));
-  ctx.translate(-safeArea / 2, -safeArea / 2);
-
   ctx.drawImage(
-    image,
-    safeArea / 2 - image.width * 0.5,
-    safeArea / 2 - image.height * 0.5
-  );
-  
-  const data = ctx.getImageData(0, 0, safeArea, safeArea);
-
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
-
-  ctx.putImageData(
-    data,
-    0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x,
-    0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y
+    imageElement,
+    actualCrop.x * scaleX,
+    actualCrop.y * scaleY,
+    actualCrop.width * scaleX,
+    actualCrop.height * scaleY,
+    0,
+    0,
+    actualCrop.width * scaleX,
+    actualCrop.height * scaleY
   );
 
   return new Promise((resolve) => {
     canvas.toBlob((file) => {
       resolve(file);
-    }, 'image/jpeg');
+    }, 'image/jpeg', 1);
   });
 }
 
 const ImageEditorModal = ({ isOpen, imageSrc, onCancel, onSave }) => {
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [aspect, setAspect] = useState(4 / 3);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [crop, setCrop] = useState();
   const [processing, setProcessing] = useState(false);
+  const imageRef = useRef(null);
 
-  const onMediaLoaded = useCallback((mediaSize) => {
-    // Set crop aspect ratio to match the loaded image exactly
-    setAspect(mediaSize.width / mediaSize.height);
-  }, []);
-
-  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const onImageLoad = (e) => {
+    imageRef.current = e.currentTarget;
+    // Set initial crop to 100% of image dimensions
+    setCrop({
+      unit: '%',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+    });
+  };
 
   const handleSave = async () => {
-    if (!imageSrc || !croppedAreaPixels) return;
+    if (!imageRef.current) return;
     try {
       setProcessing(true);
-      const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
+      const croppedImageBlob = await getCroppedImg(imageRef.current, crop);
       onSave(croppedImageBlob);
     } catch (e) {
       console.error(e);
@@ -110,76 +92,44 @@ const ImageEditorModal = ({ isOpen, imageSrc, onCancel, onSave }) => {
           </div>
 
           {/* Cropper Container */}
-          <div className="relative h-80 md:h-96 w-full bg-slate-900">
-            <Cropper
-              image={imageSrc}
-              crop={crop}
-              zoom={zoom}
-              rotation={rotation}
-              aspect={aspect}
-              onCropChange={setCrop}
-              onCropComplete={onCropComplete}
-              onZoomChange={setZoom}
-              onRotationChange={setRotation}
-              onMediaLoaded={onMediaLoaded}
-            />
+          <div className="relative w-full bg-slate-900 flex justify-center items-center overflow-auto p-4" style={{ maxHeight: '70vh' }}>
+            {imageSrc && (
+              <ReactCrop
+                crop={crop}
+                onChange={(c) => setCrop(c)}
+                className="max-h-full"
+              >
+                <img 
+                  src={imageSrc} 
+                  onLoad={onImageLoad} 
+                  alt="Crop Preview" 
+                  crossOrigin="anonymous" 
+                  style={{ maxHeight: '60vh', objectFit: 'contain' }}
+                />
+              </ReactCrop>
+            )}
           </div>
 
           {/* Controls */}
-          <div className="p-6 space-y-6 bg-bg-secondary/30">
-            {/* Zoom Slider */}
-            <div className="flex items-center space-x-4">
-              <ZoomOut size={20} className="text-text-secondary" />
-              <input
-                type="range"
-                value={zoom}
-                min={1}
-                max={3}
-                step={0.1}
-                aria-labelledby="Zoom"
-                onChange={(e) => setZoom(e.target.value)}
-                className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
-              />
-              <ZoomIn size={20} className="text-text-secondary" />
-            </div>
-
-            {/* Rotation Slider */}
-            <div className="flex items-center space-x-4">
-              <RotateCcw size={20} className="text-text-secondary" />
-              <input
-                type="range"
-                value={rotation}
-                min={0}
-                max={360}
-                step={1}
-                aria-labelledby="Rotation"
-                onChange={(e) => setRotation(e.target.value)}
-                className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
-              />
-              <span className="text-text-secondary text-sm font-medium w-12 text-right">{rotation}°</span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-2">
-              <button
-                onClick={onCancel}
-                className="px-5 py-2.5 rounded-xl font-bold text-text-secondary bg-bg-secondary hover:bg-border/50 transition-colors"
-                disabled={processing}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-5 py-2.5 rounded-xl font-bold text-white bg-primary hover:bg-primary-hover transition-colors shadow-lg shadow-primary/30 flex items-center"
-                disabled={processing}
-              >
-                {processing ? 'Processing...' : (
-                  <>
-                    <Check size={18} className="mr-2" /> Apply & Upload
-                  </>
-                )}
-              </button>
-            </div>
+          <div className="p-4 md:p-6 bg-bg-secondary/30 flex justify-end space-x-3">
+            <button
+              onClick={onCancel}
+              className="px-5 py-2.5 rounded-xl font-bold text-text-secondary bg-bg-secondary hover:bg-border/50 transition-colors"
+              disabled={processing}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-5 py-2.5 rounded-xl font-bold text-white bg-primary hover:bg-primary-hover transition-colors shadow-lg shadow-primary/30 flex items-center"
+              disabled={processing}
+            >
+              {processing ? 'Processing...' : (
+                <>
+                  <Check size={18} className="mr-2" /> Apply & Upload
+                </>
+              )}
+            </button>
           </div>
         </motion.div>
       </motion.div>
