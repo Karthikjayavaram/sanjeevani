@@ -78,13 +78,11 @@ exports.oauthCallback = async (req, res) => {
         status: 'Connected',
         connectedAt: Date.now()
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
-    // Redirect to frontend (we can't just send json because the user is visiting this via browser redirect)
-    // Wait, the user didn't specify frontend redirect URL. Usually it's the dashboard /backups.
-    // Let's redirect to the frontend domain.
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    // Redirect to frontend
+    const frontendUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:5173';
     res.redirect(`${frontendUrl}/backups?success=google_connected`);
     
   } catch (error) {
