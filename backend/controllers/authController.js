@@ -57,6 +57,10 @@ exports.forgotPassword = async (req, res) => {
     user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     await user.save();
 
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      return res.status(500).json({ error: 'Server configuration error: EMAIL_USER or EMAIL_PASS environment variables are missing.' });
+    }
+
     // Setup nodemailer
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -79,7 +83,7 @@ exports.forgotPassword = async (req, res) => {
     res.json({ message: 'OTP sent successfully to your email' });
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
 
