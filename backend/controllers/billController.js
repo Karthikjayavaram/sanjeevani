@@ -190,36 +190,42 @@ exports.updateBill = async (req, res) => {
 
     // 1. Revert existing stock from old items
     for (let oldItem of bill.items) {
-      const brand = await Brand.findById(oldItem.brand);
+      const brandId = oldItem.brand._id || oldItem.brand;
+      const brand = await Brand.findById(brandId);
       if (brand) {
-        brand.currentStock += oldItem.quantity;
+        brand.currentStock += Number(oldItem.quantity);
         await brand.save();
       }
     }
+
+    // Clean up old transactions for this bill to prevent duplication
+    await StockTransaction.deleteMany({ referenceId: bill._id });
 
     // 2. Apply new stock and track transactions
     let totalQuantity = 0;
     const stockTransactions = [];
 
     for (let newItem of items) {
-      const brand = await Brand.findById(newItem.brand);
-      if (!brand) throw new Error(`Brand not found: ${newItem.brand}`);
+      const brandId = newItem.brand._id || newItem.brand;
+      const brand = await Brand.findById(brandId);
+      if (!brand) throw new Error(`Brand not found: ${brandId}`);
 
-      if (brand.currentStock < newItem.quantity) {
+      const numQuantity = Number(newItem.quantity);
+      if (brand.currentStock < numQuantity) {
         throw new Error(`Insufficient stock for ${brand.name} after recalculation`);
       }
 
       const previousStock = brand.currentStock;
-      brand.currentStock -= newItem.quantity;
+      brand.currentStock -= numQuantity;
       brand.lastUpdated = new Date();
       await brand.save();
 
-      totalQuantity += newItem.quantity;
+      totalQuantity += numQuantity;
 
       stockTransactions.push({
         brand: brand._id,
         type: 'OUT',
-        quantity: newItem.quantity,
+        quantity: numQuantity,
         previousStock,
         currentStock: brand.currentStock,
         referenceId: bill._id,
@@ -235,8 +241,12 @@ exports.updateBill = async (req, res) => {
 
     await StockTransaction.insertMany(stockTransactions);
 
+    const io = req.app.get('io');
+    if (io) io.emit('bill_updated', { billNumber: bill.billNumber });
+
     res.json(bill);
   } catch (error) {
+    console.error("Error updating bill:", error);
     res.status(500).json({ error: error.message });
   }
 };
