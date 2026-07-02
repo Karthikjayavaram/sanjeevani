@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const brandSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  companyName: { type: String, required: false },
   variant: { type: String, required: true },
   image: { type: String, default: 'https://via.placeholder.com/150' },
   supplier: { type: String },

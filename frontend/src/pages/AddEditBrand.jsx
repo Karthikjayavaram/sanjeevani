@@ -29,6 +29,7 @@ const AddEditBrand = () => {
   
   // Brand Level State
   const [brandName, setBrandName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [brandImage, setBrandImage] = useState('https://placehold.co/400x300?text=Brand+Image');
   
   // Variants State
@@ -123,6 +124,7 @@ const AddEditBrand = () => {
       const isCustom = data.variant && !VARIANT_OPTIONS.includes(data.variant);
       
       setBrandName(data.name || '');
+      setCompanyName(data.companyName || '');
       setBrandImage(data.image || 'https://placehold.co/400x300?text=Brand+Image');
       
       setVariants([{
@@ -197,6 +199,7 @@ const AddEditBrand = () => {
         const variantData = variants[0];
         await axios.put(`${import.meta.env.VITE_API_URL}/brands/${id}`, {
           name: brandName,
+          companyName: companyName,
           image: brandImage,
           variant: variantData.variant,
           minStockAlert: variantData.minStockAlert
@@ -209,6 +212,7 @@ const AddEditBrand = () => {
         const promises = variants.map(v => {
           return axios.post(`${import.meta.env.VITE_API_URL}/brands`, {
             name: brandName,
+            companyName: companyName,
             image: brandImage,
             variant: v.variant,
             currentStock: v.currentStock,
@@ -290,9 +294,15 @@ const AddEditBrand = () => {
         <div className="premium-card p-6 md:p-8">
           <h2 className="text-lg font-bold text-text-primary mb-6">Brand Details</h2>
           <div className="space-y-6">
-            <div className="relative">
-              <input type="text" id="brandName" required value={brandName} onChange={(e) => setBrandName(e.target.value)} disabled={!!lockedBy} className="floating-input" placeholder=" " />
-              <label htmlFor="brandName" className="floating-label">Brand Name *</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="relative">
+                <input type="text" id="brandName" required value={brandName} onChange={(e) => setBrandName(e.target.value)} disabled={!!lockedBy} className="floating-input" placeholder=" " />
+                <label htmlFor="brandName" className="floating-label">Brand Name *</label>
+              </div>
+              <div className="relative">
+                <input type="text" id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} disabled={!!lockedBy} className="floating-input" placeholder=" " />
+                <label htmlFor="companyName" className="floating-label">Company Name</label>
+              </div>
             </div>
             
             {/* Image Upload UI */}
@@ -300,13 +310,13 @@ const AddEditBrand = () => {
               <label className="text-sm font-semibold text-text-secondary mb-3 block">Brand Image</label>
               
               <div 
-                className="mt-2 flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border px-6 py-10 bg-bg-secondary hover:bg-bg-secondary/50 transition-colors relative cursor-pointer group"
-                onClick={() => !lockedBy && !uploadingImage && fileInputRef.current?.click()}
+                className={`mt-2 flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border px-6 py-10 bg-bg-secondary transition-colors relative ${(!brandImage || brandImage.includes('placehold.co')) ? 'hover:bg-bg-secondary/50 cursor-pointer' : ''}`}
+                onClick={() => (!brandImage || brandImage.includes('placehold.co')) && !lockedBy && !uploadingImage && fileInputRef.current?.click()}
               >
                 {brandImage && !brandImage.includes('placehold.co') ? (
-                  <div className="relative inline-block mb-4 group/img">
-                     <img src={brandImage} alt="Preview" className="mx-auto h-40 w-40 object-cover rounded-2xl shadow-md border-4 border-white" />
-                     <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                  <div className="flex flex-col items-center">
+                     <img src={brandImage} alt="Preview" className="h-40 w-40 object-cover rounded-2xl shadow-md border-4 border-white mb-4" />
+                     <div className="flex space-x-3 mb-2">
                        <button
                          type="button"
                          onClick={(e) => {
@@ -314,27 +324,38 @@ const AddEditBrand = () => {
                            setEditorImageSrc(brandImage);
                            setEditorModalOpen(true);
                          }}
-                         className="px-4 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-colors text-sm shadow-md"
+                         className="px-5 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-colors text-sm shadow-md"
                        >
                          Edit Photo
                        </button>
-                       <span className="text-white text-xs font-medium">or click to change</span>
+                       <button
+                         type="button"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           if (!lockedBy && !uploadingImage) fileInputRef.current?.click();
+                         }}
+                         className="px-5 py-2.5 bg-bg-primary text-text-primary border border-border rounded-xl font-bold hover:bg-bg-secondary transition-colors text-sm shadow-sm"
+                       >
+                         Change
+                       </button>
                      </div>
                   </div>
                 ) : (
-                  <div className="bg-primary/5 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                    <ImagePlus className="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
-                  </div>
+                  <>
+                    <div className="bg-primary/5 p-4 rounded-full mb-4 hover:scale-110 transition-transform">
+                      <ImagePlus className="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
+                    </div>
+                    
+                    <div className="text-center">
+                      <p className="text-base font-bold text-text-primary">
+                        {uploadingImage ? 'Uploading...' : 'Click to Upload Image'}
+                      </p>
+                      <p className="text-sm text-text-secondary mt-1">
+                        Or simply <strong className="text-primary">paste an image</strong> from your clipboard (Ctrl+V)
+                      </p>
+                    </div>
+                  </>
                 )}
-                
-                <div className="text-center">
-                  <p className="text-base font-bold text-text-primary">
-                    {uploadingImage ? 'Uploading...' : 'Click to Upload Image'}
-                  </p>
-                  <p className="text-sm text-text-secondary mt-1">
-                    Or simply <strong className="text-primary">paste an image</strong> from your clipboard (Ctrl+V)
-                  </p>
-                </div>
 
                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileInputChange} />
               </div>
