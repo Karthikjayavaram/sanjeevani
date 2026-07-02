@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer');
+const emailService = require('../services/emailService');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'secret', {
@@ -57,35 +57,27 @@ exports.forgotPassword = async (req, res) => {
     user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     await user.save();
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      return res.status(500).json({ error: 'Server configuration error: EMAIL_USER or EMAIL_PASS environment variables are missing.' });
+    // VERY IMPORTANT: Log OTP so admin can see it in Render Logs if email is blocked!
+    console.log(`\n=========================================`);
+    console.log(`🔑 PASSWORD RESET OTP FOR ${user.email}: ${otp}`);
+    console.log(`=========================================\n`);
+
+    try {
+      await emailService.sendEmail({
+        to: user.email,
+        subject: 'Password Reset OTP - Sanjeevani Veeresh',
+        text: `Your password reset OTP is: ${otp}\n\nIt is valid for 15 minutes.`,
+        html: `<p>Your password reset OTP is: <strong>${otp}</strong></p><p>It is valid for 15 minutes.</p>`,
+      });
+      res.json({ message: 'OTP sent successfully to your email' });
+    } catch (emailError) {
+      console.error('Failed to send email via Resend, but OTP was generated:', emailError.message);
+      // Still return 200 so the frontend proceeds to the OTP screen!
+      res.json({ 
+        message: 'Failed to send email. Please check Render Server Logs to see your OTP!' 
+      });
     }
 
-    // Setup nodemailer with explicit host and port (Fixes ETIMEDOUT on Render)
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS.replace(/\s+/g, ''),
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: user.email,
-      subject: 'Password Reset OTP - Sanjeevani Veeresh',
-      text: `Your password reset OTP is: ${otp}\n\nIt is valid for 15 minutes.`,
-      html: `<p>Your password reset OTP is: <strong>${otp}</strong></p><p>It is valid for 15 minutes.</p>`,
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    res.json({ message: 'OTP sent successfully to your email' });
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
