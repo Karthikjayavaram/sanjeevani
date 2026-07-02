@@ -8,6 +8,7 @@ import BillDetails from './pages/BillDetails';
 import EditBill from './pages/EditBill';
 import Summary from './pages/Summary';
 import Alerts from './pages/Alerts';
+import BillingBackups from './pages/BillingBackups';
 import Layout from './components/Layout';
 import { useContext } from 'react';
 import { AuthContext } from './context/AuthContext';
@@ -37,6 +38,7 @@ function App() {
           <Route path="bills/:id/edit" element={<EditBill />} />
           <Route path="summary" element={<Summary />} />
           <Route path="notifications" element={<Alerts />} />
+          <Route path="backups" element={<BillingBackups />} />
         </Route>
         
         <Route path="*" element={<Navigate to="/" replace />} />

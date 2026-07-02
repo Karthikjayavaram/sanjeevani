@@ -117,8 +117,14 @@ app.use('/api/bills', require('./routes/billRoutes'));
 app.use('/api/summary', require('./routes/summaryRoutes'));
 app.use('/api/search', require('./routes/searchRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/backups', require('./routes/backupRoutes'));
+app.use('/api/google', require('./routes/googleRoutes'));
 
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  
+  // Initialize backup cron
+  const backupService = require('./services/backupService');
+  backupService.executeCron();
 });

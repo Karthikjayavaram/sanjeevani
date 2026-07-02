@@ -1,0 +1,174 @@
+[
+  {
+    "_id": "6a4248a72acc4ec78df3ea2c",
+    "billNumber": "BILL-276144",
+    "millName": "Suvarna",
+    "partyName": "karthik",
+    "totalQuantity": 120,
+    "items": [
+      {
+        "brand": "6a42306ef10fb4079a007ea3",
+        "quantity": 120,
+        "_id": "6a4248a72acc4ec78df3ea2d"
+      }
+    ],
+    "adminId": "6a421694022bb010e688d7c1",
+    "date": "2026-06-29T10:27:51.509Z",
+    "createdAt": "2026-06-29T10:27:51.858Z",
+    "updatedAt": "2026-06-29T10:27:51.858Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a4262760e6145ff8e0f4fce",
+    "billNumber": "BILL-065135",
+    "millName": "Suvarna",
+    "partyName": "karthik",
+    "totalQuantity": 200,
+    "items": [
+      {
+        "brand": "6a424a7d2acc4ec78df3ea39",
+        "quantity": 200,
+        "_id": "6a4262760e6145ff8e0f4fcf"
+      }
+    ],
+    "adminId": "6a421694022bb010e688d7c1",
+    "date": "2026-06-29T12:17:58.946Z",
+    "createdAt": "2026-06-29T12:17:59.201Z",
+    "updatedAt": "2026-06-29T12:17:59.201Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a4288ea86c6c2bb601a2e6b",
+    "billNumber": "BILL-276143",
+    "millName": "Suvarna",
+    "partyName": "karthik",
+    "totalQuantity": 40,
+    "items": [
+      {
+        "brand": "6a4279e66de37d15b85e7e2d",
+        "quantity": 40,
+        "_id": "6a4288ea86c6c2bb601a2e6c"
+      }
+    ],
+    "adminId": "000000000000000000000000",
+    "date": "2026-06-29T15:02:02.999Z",
+    "createdAt": "2026-06-29T15:02:03.470Z",
+    "updatedAt": "2026-06-29T15:02:03.470Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a42893986c6c2bb601a2e70",
+    "billNumber": "BILL-065134",
+    "millName": "abc",
+    "partyName": "xyz",
+    "totalQuantity": 100,
+    "items": [
+      {
+        "brand": "6a4279e66de37d15b85e7e2d",
+        "quantity": 100,
+        "_id": "6a42893986c6c2bb601a2e71"
+      }
+    ],
+    "adminId": "000000000000000000000000",
+    "date": "2026-06-29T15:03:21.346Z",
+    "createdAt": "2026-06-29T15:03:21.826Z",
+    "updatedAt": "2026-06-29T15:03:21.826Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a428a8f86c6c2bb601a2ea6",
+    "billNumber": "Bill123",
+    "millName": "Abc",
+    "partyName": "Xyz",
+    "totalQuantity": 50,
+    "items": [
+      {
+        "brand": "6a427b9c6de37d15b85e7e5a",
+        "quantity": 50,
+        "_id": "6a428a8f86c6c2bb601a2ea7"
+      }
+    ],
+    "adminId": "000000000000000000000000",
+    "date": "2026-06-29T15:09:03.088Z",
+    "createdAt": "2026-06-29T15:09:03.572Z",
+    "updatedAt": "2026-06-29T15:09:03.572Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a4295c4fef8e20810b9eea7",
+    "billNumber": "Bill45678",
+    "millName": "Abc",
+    "partyName": "Xyz",
+    "totalQuantity": 480,
+    "items": [
+      {
+        "brand": "6a427b9c6de37d15b85e7e5a",
+        "quantity": 400,
+        "_id": "6a4295c4fef8e20810b9eea8"
+      },
+      {
+        "brand": "6a4279e66de37d15b85e7e2d",
+        "quantity": 50,
+        "_id": "6a4295c4fef8e20810b9eea9"
+      },
+      {
+        "brand": "6a427b456de37d15b85e7e50",
+        "quantity": 30,
+        "_id": "6a4295c4fef8e20810b9eeaa"
+      }
+    ],
+    "adminId": "000000000000000000000000",
+    "date": "2026-06-29T15:56:52.871Z",
+    "createdAt": "2026-06-29T15:56:54.280Z",
+    "updatedAt": "2026-06-29T15:56:54.280Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a4295f9fef8e20810b9eeae",
+    "billNumber": "Bill12345",
+    "millName": "Abc",
+    "partyName": "Xyz",
+    "totalQuantity": 170,
+    "items": [
+      {
+        "brand": "6a427b9c6de37d15b85e7e5a",
+        "quantity": 20,
+        "_id": "6a4295f9fef8e20810b9eeaf"
+      },
+      {
+        "brand": "6a427a366de37d15b85e7e37",
+        "quantity": 50,
+        "_id": "6a4295f9fef8e20810b9eeb0"
+      },
+      {
+        "brand": "6a427a366de37d15b85e7e37",
+        "quantity": 100,
+        "_id": "6a4295f9fef8e20810b9eeb1"
+      }
+    ],
+    "adminId": "000000000000000000000000",
+    "date": "2026-06-29T15:57:45.356Z",
+    "createdAt": "2026-06-29T15:57:46.762Z",
+    "updatedAt": "2026-06-29T15:57:46.762Z",
+    "__v": 0
+  },
+  {
+    "_id": "6a43cef3208bf1a3b70e60cf",
+    "billNumber": "1234",
+    "millName": "karthik",
+    "partyName": "karthik",
+    "totalQuantity": 10,
+    "items": [
+      {
+        "brand": "6a43ce69208bf1a3b70e60bc",
+        "quantity": 10,
+        "_id": "6a43cef3208bf1a3b70e60d0"
+      }
+    ],
+    "adminId": "000000000000000000000000",
+    "date": "2026-06-30T14:13:07.057Z",
+    "createdAt": "2026-06-30T14:13:07.538Z",
+    "updatedAt": "2026-06-30T14:13:07.538Z",
+    "__v": 0
+  }
+]

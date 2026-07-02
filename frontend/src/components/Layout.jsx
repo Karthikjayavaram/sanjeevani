@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { Home, Receipt, BarChart2, Bell, Package, Search, Menu, User } from 'lucide-react';
+import { Home, Receipt, BarChart2, Bell, Package, Search, Menu, User, DatabaseBackup } from 'lucide-react';
 import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -47,6 +47,10 @@ const Layout = () => {
           {hasAlerts && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-error border-2 border-white rounded-full"></span>}
         </div>
         <span className="md:block hidden tracking-wide">Alerts</span>
+      </NavLink>
+      <NavLink to="/backups" className={({ isActive }) => `flex items-center space-x-3 p-3 rounded-xl transition-all duration-300 ${isActive ? 'bg-primary/10 text-primary font-bold' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary font-medium'}`}>
+        <DatabaseBackup size={22} />
+        <span className="md:block hidden tracking-wide">Billing Backups</span>
       </NavLink>
     </>
   );
@@ -125,6 +129,13 @@ const Layout = () => {
                 {hasAlerts && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error border-2 border-white rounded-full"></span>}
               </div>
               <span className="text-[11px] mt-1 font-semibold tracking-wide">Alerts</span>
+            </motion.div>
+          </NavLink>
+
+          <NavLink to="/backups" className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full ${isActive ? 'text-primary' : 'text-text-secondary hover:text-primary'}`}>
+            <motion.div whileTap={{ scale: 0.9 }} className="flex flex-col items-center justify-center w-[48px] h-[48px]">
+              <DatabaseBackup size={24} />
+              <span className="text-[11px] mt-1 font-semibold tracking-wide">Backups</span>
             </motion.div>
           </NavLink>
         </div>
