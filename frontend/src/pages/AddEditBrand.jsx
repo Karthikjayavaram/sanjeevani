@@ -304,8 +304,22 @@ const AddEditBrand = () => {
                 onClick={() => !lockedBy && !uploadingImage && fileInputRef.current?.click()}
               >
                 {brandImage && !brandImage.includes('placehold.co') ? (
-                  <div className="relative inline-block mb-4">
+                  <div className="relative inline-block mb-4 group/img">
                      <img src={brandImage} alt="Preview" className="mx-auto h-40 w-40 object-cover rounded-2xl shadow-md border-4 border-white" />
+                     <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover/img:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                       <button
+                         type="button"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setEditorImageSrc(brandImage);
+                           setEditorModalOpen(true);
+                         }}
+                         className="px-4 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-colors text-sm shadow-md"
+                       >
+                         Edit Photo
+                       </button>
+                       <span className="text-white text-xs font-medium">or click to change</span>
+                     </div>
                   </div>
                 ) : (
                   <div className="bg-primary/5 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
