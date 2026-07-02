@@ -129,7 +129,7 @@ const BillDetails = () => {
             <div className="col-span-2 text-center">Variant</div>
             <div className="col-span-2 text-right">Qty</div>
           </div>
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border max-h-[350px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pr-1">
             {bill.items.map((item, index) => (
               <div key={item._id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-bg-secondary/50 transition-colors">
                 <div className="col-span-1 text-text-secondary font-bold text-sm">{index + 1}</div>

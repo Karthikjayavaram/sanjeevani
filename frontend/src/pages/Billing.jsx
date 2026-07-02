@@ -269,9 +269,20 @@ const Billing = () => {
     setLoading(true);
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      // Aggregate duplicate brands
+      const aggregatedMap = {};
+      for (const item of items) {
+        if (!aggregatedMap[item.brand]) aggregatedMap[item.brand] = 0;
+        aggregatedMap[item.brand] += Number(item.quantity);
+      }
+      const aggregatedItems = Object.keys(aggregatedMap).map(brand => ({
+        brand,
+        quantity: aggregatedMap[brand]
+      }));
+
       const payload = {
         ...billData,
-        items: items.map(item => ({ brand: item.brand, quantity: Number(item.quantity) }))
+        items: aggregatedItems
       };
       await axios.post(`${import.meta.env.VITE_API_URL}/bills`, payload, config);
       setSuccess(true);

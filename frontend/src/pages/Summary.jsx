@@ -10,13 +10,15 @@ import TransactionDetailsDialog from '../components/TransactionDetailsDialog';
 const Summary = () => {
   const [summaryData, setSummaryData] = useState(null);
   const [filter, setFilter] = useState('today');
+  const [customStartDate, setCustomStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [customEndDate, setCustomEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [loading, setLoading] = useState(true);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
     fetchSummary();
-  }, [filter]);
+  }, [filter, customStartDate, customEndDate]);
 
   const fetchSummary = async () => {
     setLoading(true);
@@ -35,6 +37,11 @@ const Summary = () => {
         startDate = startOfWeek(new Date());
       } else if (filter === 'month') {
         startDate = startOfMonth(new Date());
+      } else if (filter === 'custom') {
+        startDate = new Date(customStartDate);
+        endDate = new Date(customEndDate);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
       }
 
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, config);
@@ -80,20 +87,56 @@ const Summary = () => {
       </div>
 
       {/* Premium Filters */}
-      <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
-        {['today', 'yesterday', 'week', 'month'].map(f => (
-          <button 
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-300 ${
-              filter === f 
-                ? 'bg-primary text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] scale-105' 
-                : 'bg-white text-text-secondary border border-border hover:bg-bg-secondary hover:text-text-primary'
-            }`}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
+      <div className="flex flex-col space-y-4">
+        <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
+          {['today', 'yesterday', 'week', 'month', 'custom'].map(f => (
+            <button 
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-300 ${
+                filter === f 
+                  ? 'bg-primary text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] scale-105' 
+                  : 'bg-white text-text-secondary border border-border hover:bg-bg-secondary hover:text-text-primary'
+              }`}
+            >
+              {f === 'custom' ? 'Custom Date' : f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
+        
+        <AnimatePresence>
+          {filter === 'custom' && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }} 
+              animate={{ opacity: 1, height: 'auto' }} 
+              exit={{ opacity: 0, height: 0 }}
+              className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 bg-bg-secondary p-4 rounded-xl border border-border w-fit overflow-hidden"
+            >
+              <div className="w-full sm:w-auto">
+                <label className="block text-xs font-bold text-text-secondary mb-1 uppercase tracking-wider">Start Date</label>
+                <input 
+                  type="date" 
+                  value={customStartDate} 
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="bg-white border border-border text-text-primary text-sm font-medium rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 outline-none transition-all"
+                />
+              </div>
+              <div className="w-full sm:w-auto hidden sm:block text-text-secondary mt-5">
+                <span className="font-bold">—</span>
+              </div>
+              <div className="w-full sm:w-auto">
+                <label className="block text-xs font-bold text-text-secondary mb-1 uppercase tracking-wider">End Date</label>
+                <input 
+                  type="date" 
+                  value={customEndDate} 
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  min={customStartDate}
+                  className="bg-white border border-border text-text-primary text-sm font-medium rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 outline-none transition-all"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <AnimatePresence mode="wait">

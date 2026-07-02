@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import PageTransition from '../components/PageTransition';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { motion, AnimatePresence } from 'framer-motion';
+import ImageEditorModal from '../components/ImageEditorModal';
 
 const VARIANT_OPTIONS = [
   '5 kg with handle',
@@ -38,6 +39,8 @@ const AddEditBrand = () => {
   const [lockedBy, setLockedBy] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [editorModalOpen, setEditorModalOpen] = useState(false);
+  const [editorImageSrc, setEditorImageSrc] = useState(null);
   
   const { user } = useContext(AuthContext);
   const socket = useContext(SocketContext);
@@ -59,7 +62,12 @@ const AddEditBrand = () => {
         if (item.type.indexOf('image') === 0) {
           const blob = item.getAsFile();
           if (blob) {
-            uploadImage(blob);
+            const reader = new FileReader();
+            reader.onload = () => {
+              setEditorImageSrc(reader.result);
+              setEditorModalOpen(true);
+            };
+            reader.readAsDataURL(blob);
             break;
           }
         }
@@ -223,7 +231,7 @@ const AddEditBrand = () => {
     
     setUploadingImage(true);
     const uploadData = new FormData();
-    uploadData.append('image', file);
+    uploadData.append('image', file, file.name || 'image.jpg');
 
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'multipart/form-data' } };
@@ -241,8 +249,14 @@ const AddEditBrand = () => {
   const handleFileInputChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      uploadImage(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setEditorImageSrc(reader.result);
+        setEditorModalOpen(true);
+      };
+      reader.readAsDataURL(file);
     }
+    e.target.value = null;
   };
 
   return (
@@ -459,6 +473,20 @@ const AddEditBrand = () => {
         isDangerous={false}
         onConfirm={handleConfirmSave}
         onCancel={() => setIsConfirmDialogOpen(false)}
+      />
+
+      <ImageEditorModal
+        isOpen={editorModalOpen}
+        imageSrc={editorImageSrc}
+        onCancel={() => {
+          setEditorModalOpen(false);
+          setEditorImageSrc(null);
+        }}
+        onSave={(croppedBlob) => {
+          setEditorModalOpen(false);
+          setEditorImageSrc(null);
+          uploadImage(croppedBlob);
+        }}
       />
     </PageTransition>
   );

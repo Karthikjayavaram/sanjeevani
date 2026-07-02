@@ -15,51 +15,63 @@ exports.createBill = async (req, res) => {
       return res.status(400).json({ error: 'Items are required' });
     }
 
+    // Phase 1: Validation and Fetch
+    const brandsMap = new Map();
+    const getBrand = async (id) => {
+      if (!brandsMap.has(id.toString())) {
+        const brand = await Brand.findById(id);
+        if (!brand) throw new Error(`Brand not found: ${id}`);
+        brandsMap.set(id.toString(), { doc: brand, projectedStock: brand.currentStock });
+      }
+      return brandsMap.get(id.toString());
+    };
+
     let totalQuantity = 0;
-
-    // Create the bill first
-    const bill = new Bill({
-      billNumber,
-      millName,
-      partyName,
-      items,
-      totalQuantity: 0,
-      adminId
-    });
-
     const stockTransactions = [];
+    const billId = new mongoose.Types.ObjectId();
 
     for (let item of items) {
-      const brand = await Brand.findById(item.brand);
-      if (!brand) {
-        throw new Error(`Brand not found: ${item.brand}`);
-      }
+      const bData = await getBrand(item.brand);
+      const qty = Number(item.quantity);
       
-      if (brand.currentStock < item.quantity) {
-        throw new Error(`Insufficient stock for ${brand.name}`);
+      if (bData.projectedStock < qty) {
+        throw new Error(`Insufficient stock for ${bData.doc.name}`);
       }
 
-      const previousStock = brand.currentStock;
-      brand.currentStock -= item.quantity;
-      brand.lastUpdated = new Date();
-      await brand.save();
-
-      totalQuantity += item.quantity;
+      const previousStock = bData.projectedStock;
+      bData.projectedStock -= qty;
+      totalQuantity += qty;
 
       stockTransactions.push({
-        brand: brand._id,
+        brand: bData.doc._id,
         type: 'OUT',
-        quantity: item.quantity,
+        quantity: qty,
         previousStock,
-        currentStock: brand.currentStock,
-        referenceId: bill._id,
+        currentStock: bData.projectedStock,
+        referenceId: billId,
         admin: adminId,
       });
     }
 
-    bill.totalQuantity = totalQuantity;
-    await bill.save();
+    // Phase 2: DB Writes
+    const bill = new Bill({
+      _id: billId,
+      billNumber,
+      millName,
+      partyName,
+      items,
+      totalQuantity,
+      adminId
+    });
     
+    await bill.save();
+
+    for (let bData of brandsMap.values()) {
+      bData.doc.currentStock = bData.projectedStock;
+      bData.doc.lastUpdated = new Date();
+      await bData.doc.save();
+    }
+
     await StockTransaction.insertMany(stockTransactions);
 
     // io access if needed
@@ -188,49 +200,59 @@ exports.updateBill = async (req, res) => {
       return res.status(404).json({ error: 'Bill not found' });
     }
 
-    // 1. Revert existing stock from old items
+    // 1. Fetch ALL brands involved (old and new)
+    const brandsMap = new Map();
+    const getBrand = async (id) => {
+      if (!brandsMap.has(id.toString())) {
+        const brand = await Brand.findById(id);
+        if (!brand) throw new Error(`Brand not found: ${id}`);
+        brandsMap.set(id.toString(), { doc: brand, projectedStock: brand.currentStock });
+      }
+      return brandsMap.get(id.toString());
+    };
+
+    // 2. Revert old stock in memory
     for (let oldItem of bill.items) {
       const brandId = oldItem.brand._id || oldItem.brand;
-      const brand = await Brand.findById(brandId);
-      if (brand) {
-        brand.currentStock += Number(oldItem.quantity);
-        await brand.save();
-      }
+      const bData = await getBrand(brandId);
+      bData.projectedStock += Number(oldItem.quantity);
     }
 
-    // Clean up old transactions for this bill to prevent duplication
-    await StockTransaction.deleteMany({ referenceId: bill._id });
-
-    // 2. Apply new stock and track transactions
+    // 3. Apply new stock and validate in memory
     let totalQuantity = 0;
     const stockTransactions = [];
 
     for (let newItem of items) {
       const brandId = newItem.brand._id || newItem.brand;
-      const brand = await Brand.findById(brandId);
-      if (!brand) throw new Error(`Brand not found: ${brandId}`);
+      const bData = await getBrand(brandId);
+      const qty = Number(newItem.quantity);
 
-      const numQuantity = Number(newItem.quantity);
-      if (brand.currentStock < numQuantity) {
-        throw new Error(`Insufficient stock for ${brand.name} after recalculation`);
+      if (bData.projectedStock < qty) {
+        throw new Error(`Insufficient stock for ${bData.doc.name} after recalculation`);
       }
 
-      const previousStock = brand.currentStock;
-      brand.currentStock -= numQuantity;
-      brand.lastUpdated = new Date();
-      await brand.save();
-
-      totalQuantity += numQuantity;
+      const previousStock = bData.projectedStock;
+      bData.projectedStock -= qty;
+      totalQuantity += qty;
 
       stockTransactions.push({
-        brand: brand._id,
+        brand: bData.doc._id,
         type: 'OUT',
-        quantity: numQuantity,
+        quantity: qty,
         previousStock,
-        currentStock: brand.currentStock,
+        currentStock: bData.projectedStock,
         referenceId: bill._id,
         admin: adminId,
       });
+    }
+
+    // 4. Execution phase (All validated!)
+    await StockTransaction.deleteMany({ referenceId: bill._id });
+
+    for (let bData of brandsMap.values()) {
+      bData.doc.currentStock = bData.projectedStock;
+      bData.doc.lastUpdated = new Date();
+      await bData.doc.save();
     }
 
     bill.millName = millName;
