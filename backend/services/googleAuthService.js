@@ -2,7 +2,7 @@ const { google } = require('googleapis');
 const crypto = require('crypto');
 const GoogleToken = require('../models/GoogleToken');
 
-const ENCRYPTION_KEY = process.env.JWT_SECRET ? crypto.scryptSync(process.env.JWT_SECRET, 'salt', 32) : crypto.randomBytes(32);
+const ENCRYPTION_KEY = crypto.scryptSync(process.env.JWT_SECRET || 'fallback-secret-key-godown-12345', 'salt', 32);
 const IV_LENGTH = 16;
 
 function encrypt(text) {
@@ -14,13 +14,20 @@ function encrypt(text) {
 }
 
 function decrypt(text) {
-  let textParts = text.split(':');
-  let iv = Buffer.from(textParts.shift(), 'hex');
-  let encryptedText = Buffer.from(textParts.join(':'), 'hex');
-  let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
-  let decrypted = decipher.update(encryptedText);
-  decrypted = Buffer.concat([decrypted, decipher.final()]);
-  return decrypted.toString();
+  try {
+    let textParts = text.split(':');
+    let iv = Buffer.from(textParts.shift(), 'hex');
+    let encryptedText = Buffer.from(textParts.join(':'), 'hex');
+    let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+  } catch (error) {
+    if (error.message.includes('bad decrypt') || error.message.includes('wrong final block length')) {
+      throw new Error('Google Drive key mismatch. Please Disconnect and Reconnect Google Drive in the dashboard.');
+    }
+    throw error;
+  }
 }
 
 function getOAuth2Client() {
