@@ -67,7 +67,7 @@ exports.restorePreview = async (req, res) => {
       records 
     });
   } catch (error) {
-    res.status(500).json({ message: 'Restore preview failed', error: error.message });
+    res.status(500).json({ message: 'Restore preview failed: ' + error.message, error: error.message, stack: error.stack });
   }
 };
 

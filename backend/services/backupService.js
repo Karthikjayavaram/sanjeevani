@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
 const archiver = require('archiver');
@@ -49,9 +50,9 @@ const createBackup = async (type = 'Auto') => {
     
     backupLog.backupName = fileName;
     
-    const backupDir = path.join(__dirname, '../backups');
+    const backupDir = path.join(os.tmpdir(), 'godown-backups');
     if (!fs.existsSync(backupDir)) {
-      fs.mkdirSync(backupDir);
+      fs.mkdirSync(backupDir, { recursive: true });
     }
     const zipPath = path.join(backupDir, fileName);
     
@@ -108,8 +109,8 @@ const createBackup = async (type = 'Auto') => {
 const downloadBackup = async (fileId) => {
   try {
     const drive = await googleAuthService.getDriveClient();
-    const tempDir = path.join(__dirname, '../temp');
-    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+    const tempDir = path.join(os.tmpdir(), 'godown-temp');
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
     
     const destPath = path.join(tempDir, `${fileId}.zip`);
     
@@ -117,8 +118,9 @@ const downloadBackup = async (fileId) => {
     return new Promise((resolve, reject) => {
       const dest = fs.createWriteStream(destPath);
       res.data.pipe(dest);
-      dest.on('finish', () => resolve(destPath));
+      dest.on('close', () => resolve(destPath));
       dest.on('error', err => reject(err));
+      res.data.on('error', err => reject(err));
     });
   } catch (error) {
     throw error;
@@ -127,22 +129,41 @@ const downloadBackup = async (fileId) => {
 
 const restoreToTemp = async (fileId) => {
   try {
-    const tempDir = path.join(__dirname, '../temp');
-    const zipPath = await downloadBackup(fileId);
-    const extractPath = path.join(tempDir, `extracted-${fileId}`);
-    if (!fs.existsSync(extractPath)) {
-      fs.mkdirSync(extractPath);
-    }
-    
-    await fs.createReadStream(zipPath)
-      .pipe(unzipper.Extract({ path: extractPath }))
-      .promise();
-    
-    const billsFile = path.join(extractPath, 'bills.json');
-    const stockFile = path.join(extractPath, 'stock-transactions.json');
-    
-    const billsData = fs.existsSync(billsFile) ? JSON.parse(fs.readFileSync(billsFile, 'utf-8')) : [];
-    const stockData = fs.existsSync(stockFile) ? JSON.parse(fs.readFileSync(stockFile, 'utf-8')) : [];
+    const drive = await googleAuthService.getDriveClient();
+    const res = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
+
+    let billsData = [];
+    let stockData = [];
+
+    await new Promise((resolve, reject) => {
+      res.data
+        .pipe(unzipper.Parse())
+        .on('entry', (entry) => {
+          const fileName = entry.path;
+          if (fileName === 'bills.json' || fileName === 'stock-transactions.json') {
+            const chunks = [];
+            entry.on('data', chunk => chunks.push(chunk));
+            entry.on('end', () => {
+              const content = Buffer.concat(chunks).toString('utf-8');
+              if (content.trim()) {
+                try {
+                  if (fileName === 'bills.json') billsData = JSON.parse(content);
+                  if (fileName === 'stock-transactions.json') stockData = JSON.parse(content);
+                } catch (e) {
+                  console.error('JSON parse error:', e);
+                }
+              }
+            });
+            entry.on('error', reject);
+          } else {
+            entry.autodrain();
+          }
+        })
+        .on('close', resolve)
+        .on('error', reject);
+      
+      res.data.on('error', reject);
+    });
     
     const db = mongoose.connection.db;
     const restoreCollection = db.collection('billing_restore');
@@ -179,9 +200,6 @@ const restoreToTemp = async (fileId) => {
 
     if (formattedBills.length > 0) await restoreCollection.insertMany(formattedBills);
     if (formattedStocks.length > 0) await restoreStockCollection.insertMany(formattedStocks);
-    
-    fs.unlinkSync(zipPath);
-    fs.rmSync(extractPath, { recursive: true, force: true });
     
     return { bills: formattedBills, stocks: formattedStocks };
   } catch (error) {

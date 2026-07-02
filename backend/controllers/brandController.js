@@ -9,7 +9,7 @@ exports.getBrands = async (req, res) => {
     if (search) {
       query = { $text: { $search: search } };
     }
-    const brands = await Brand.find(query).sort({ lastUpdated: -1 });
+    const brands = await Brand.find(query).sort({ lastUpdated: -1 }).lean();
     res.json(brands);
   } catch (error) {
     res.status(500).json({ error: error.message });

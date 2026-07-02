@@ -71,28 +71,44 @@ exports.getDashboardStats = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const incomingTransactions = await StockTransaction.aggregate([
-      { $match: { createdAt: { $gte: today }, type: 'IN' } },
-      { $group: { _id: null, total: { $sum: '$quantity' } } }
-    ]);
-
-    const outgoingTransactions = await StockTransaction.aggregate([
-      { $match: { createdAt: { $gte: today }, type: 'OUT' } },
-      { $group: { _id: null, total: { $sum: '$quantity' } } }
+    const [
+      incomingTransactions,
+      outgoingTransactions,
+      brandStats,
+      recentBills
+    ] = await Promise.all([
+      StockTransaction.aggregate([
+        { $match: { createdAt: { $gte: today }, type: 'IN' } },
+        { $group: { _id: null, total: { $sum: '$quantity' } } }
+      ]),
+      StockTransaction.aggregate([
+        { $match: { createdAt: { $gte: today }, type: 'OUT' } },
+        { $group: { _id: null, total: { $sum: '$quantity' } } }
+      ]),
+      Brand.aggregate([
+        {
+          $group: {
+            _id: null,
+            currentAvailableStock: { $sum: '$currentStock' },
+            lowStockCount: {
+              $sum: { $cond: [{ $lte: ['$currentStock', '$minStockAlert'] }, 1, 0] }
+            }
+          }
+        }
+      ]),
+      Bill.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate('items.brand', 'name variant')
+        .populate('adminId', 'name')
+        .lean()
     ]);
 
     const totalIncoming = incomingTransactions.length > 0 ? incomingTransactions[0].total : 0;
     const totalOutgoing = outgoingTransactions.length > 0 ? outgoingTransactions[0].total : 0;
 
-    const brands = await Brand.find({}, 'currentStock minStockAlert');
-    const currentAvailableStock = brands.reduce((acc, brand) => acc + brand.currentStock, 0);
-    const lowStockCount = brands.filter(b => b.currentStock <= b.minStockAlert).length;
-
-    const recentBills = await Bill.find()
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .populate('items.brand', 'name variant')
-      .populate('adminId', 'name');
+    const currentAvailableStock = brandStats.length > 0 ? brandStats[0].currentAvailableStock : 0;
+    const lowStockCount = brandStats.length > 0 ? brandStats[0].lowStockCount : 0;
 
     res.json({
       totalIncoming,
