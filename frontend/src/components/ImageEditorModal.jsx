@@ -59,8 +59,14 @@ const ImageEditorModal = ({ isOpen, imageSrc, onCancel, onSave }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [aspect, setAspect] = useState(4 / 3);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [processing, setProcessing] = useState(false);
+
+  const onMediaLoaded = useCallback((mediaSize) => {
+    // Set crop aspect ratio to match the loaded image exactly
+    setAspect(mediaSize.width / mediaSize.height);
+  }, []);
 
   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -110,11 +116,12 @@ const ImageEditorModal = ({ isOpen, imageSrc, onCancel, onSave }) => {
               crop={crop}
               zoom={zoom}
               rotation={rotation}
-              aspect={4 / 3}
+              aspect={aspect}
               onCropChange={setCrop}
               onCropComplete={onCropComplete}
               onZoomChange={setZoom}
               onRotationChange={setRotation}
+              onMediaLoaded={onMediaLoaded}
             />
           </div>
 
